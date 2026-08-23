@@ -1,8 +1,58 @@
 # OutScroll — Deployment Guide
 
+## Quick Start: Docker Self-Hosted (No Cloud Dependencies)
+
+OutScroll can run entirely on your own infrastructure with zero cloud subscriptions:
+
+```bash
+# 1. Clone the repo
+git clone https://github.com/z99wE/outscroll.git && cd outscroll
+
+# 2. Generate secrets
+export JWT_SECRET=$(openssl rand -hex 32)
+export JWT_REFRESH_SECRET=$(openssl rand -hex 32)
+export ADMIN_KEY=$(openssl rand -hex 32)
+export DB_PASSWORD=$(openssl rand -hex 16)
+
+# 3. Start everything
+docker-compose up -d
+
+# 4. Access
+# API: http://localhost:3000/api/health
+# App: http://localhost:5175
+# Admin: http://localhost:5175 → click Admin → enter ADMIN_KEY
+```
+
+That's it. PostgreSQL + API + Frontend all running locally. No Emergent, no Vercel, no Supabase needed.
+
+**Your ADMIN_KEY:** Save it! You need it to access the admin dashboard.
+
+## Deploy to Any VPS (Ubuntu)
+
+```bash
+# On your VPS:
+sudo apt update && sudo apt install docker.io docker-compose -y
+git clone https://github.com/z99wE/outscroll.git && cd outscroll
+
+# Configure secrets
+export JWT_SECRET=$(openssl rand -hex 32)
+export JWT_REFRESH_SECRET=$(openssl rand -hex 32)
+export ADMIN_KEY=$(openssl rand -hex 32)
+export DB_PASSWORD=$(openssl rand -hex 16)
+
+docker-compose up -d
+
+# Point your domain to the VPS IP
+# Add nginx reverse proxy for HTTPS (Let's Encrypt)
+```
+
+---
+
+## Deploy to Emergent (Cloud)
+
 ## Prerequisites
 
-Before deploying, you need these configured:
+Before deploying to Emergent, you need these configured:
 
 ### 1. Supabase (Database)
 

@@ -442,6 +442,55 @@ export default function LandingPage({ onEnter }) {
           </div>
         </section>
 
+        {/* ===== ROLLING MARQUEE ===== */}
+        <div style={{
+          overflow: 'hidden',
+          borderTop: '1px solid rgba(255,255,255,0.04)',
+          borderBottom: '1px solid rgba(255,255,255,0.04)',
+          padding: '1rem 0',
+          background: 'rgba(91, 141, 239, 0.03)',
+        }}>
+          <div style={{
+            display: 'flex',
+            width: 'max-content',
+            animation: 'marquee 20s linear infinite',
+          }}>
+            {Array.from({ length: 6 }).map((_, i) => (
+              <span key={i} style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '2rem',
+                padding: '0 2rem',
+                whiteSpace: 'nowrap',
+                fontFamily: "'Playfair Display', Georgia, serif",
+                fontSize: 'clamp(1.5rem, 3vw, 2.5rem)',
+                fontWeight: 900,
+                letterSpacing: '-0.02em',
+                textTransform: 'uppercase',
+              }}>
+                <span style={{
+                  background: 'linear-gradient(135deg, var(--accent), #a78bfa)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                }}>outscroll</span>
+                <span style={{ color: 'var(--text-muted)', fontSize: '0.5em' }}>●</span>
+                <span style={{ color: 'var(--text-secondary)' }}>your competitor</span>
+                <span style={{ color: 'var(--text-muted)', fontSize: '0.5em' }}>●</span>
+                <span style={{
+                  background: 'linear-gradient(135deg, #a78bfa, var(--success))',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                }}>outscroll</span>
+                <span style={{ color: 'var(--text-muted)', fontSize: '0.5em' }}>●</span>
+                <span style={{ color: 'var(--text-secondary)' }}>your competitor</span>
+                <span style={{ color: 'var(--text-muted)', fontSize: '0.5em' }}>●</span>
+              </span>
+            ))}
+          </div>
+        </div>
+
         {/* ===== DOOMSCROLL WALL ===== */}
         <section style={{
           padding: '4rem 0',

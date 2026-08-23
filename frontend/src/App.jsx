@@ -536,15 +536,16 @@ function FeedPage({ user, onTrack }) {
 }
 
 // ========== LeaderboardPage ==========
-function LeaderboardPage() {
+function LeaderboardPage({ user, setPage }) {
   const [leaderboard, setLeaderboard] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!user) return;
     axios.get(`${API}/leaderboard`).then(res => {
       setLeaderboard(res.data.leaderboard);
     }).catch(() => {}).finally(() => setLoading(false));
-  }, []);
+  }, [user]);
 
   const getRankColor = (rank) => {
     if (rank === 1) return 'var(--gold)';
@@ -580,6 +581,27 @@ function LeaderboardPage() {
       });
     }
   }, []);
+
+  if (!user) {
+    return (
+      <div style={{ maxWidth: '500px', margin: '4rem auto', textAlign: 'center' }}>
+        <div className="neu-card" style={{ padding: '3rem 2rem' }}>
+          <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🏆</div>
+          <h2 style={{ marginBottom: '0.5rem', fontSize: '1.5rem' }}>Leaderboard</h2>
+          <p style={{ color: 'var(--text-muted)', marginBottom: '2rem', fontSize: '0.9rem' }}>
+            Sign in to see the full leaderboard and track your rank.
+          </p>
+          <button
+            className="neu-btn neu-btn-primary"
+            onClick={() => setPage('profile')}
+            style={{ padding: '0.875rem 2.5rem', fontSize: '0.9rem' }}
+          >
+            Sign In to View
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -1273,7 +1295,7 @@ export default function App() {
           style={{ maxWidth: '720px', margin: '0 auto', padding: '2rem 1.5rem', outline: 'none' }}
         >
           {page === 'feed' && <FeedPage user={user} onTrack={handleTrack} />}
-          {page === 'leaderboard' && <LeaderboardPage />}
+          {page === 'leaderboard' && <LeaderboardPage user={user} setPage={setPage} />}
           {page === 'submit' && user && <SubmitPage user={user} />}
           {page === 'profile' && (user ? <ProfilePage user={user} /> : <AuthPage onLogin={handleLogin} />)}
           {page === 'notifications' && user && <NotificationsPage onMarkRead={() => setUnreadCount(0)} />}
