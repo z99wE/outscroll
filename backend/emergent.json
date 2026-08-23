@@ -4,6 +4,10 @@
   "memory": 512,
   "environment": {
     "DATABASE_URL": "${DATABASE_URL}",
-    "JWT_SECRET": "${JWT_SECRET}"
+    "JWT_SECRET": "${JWT_SECRET}",
+    "JWT_REFRESH_SECRET": "${JWT_REFRESH_SECRET}",
+    "FRONTEND_URL": "${FRONTEND_URL}",
+    "PORT": "3000",
+    "NODE_ENV": "production"
   }
 }

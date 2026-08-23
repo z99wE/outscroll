@@ -6,8 +6,10 @@ module.exports = {
     env: {
       DATABASE_URL: 'postgresql://outscroll:outscroll123@localhost:5432/outscroll',
       JWT_SECRET: 'outscroll-local-dev-secret-2024',
+      JWT_REFRESH_SECRET: 'outscroll-local-refresh-secret-2024',
       PORT: 3456,
       FRONTEND_URL: 'http://localhost:5173',
+      NODE_ENV: 'development',
     }
   }]
 };
