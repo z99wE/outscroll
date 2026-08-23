@@ -1,31 +1,54 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback, Component } from 'react';
 import axios from 'axios';
 
 const API = '/api';
 
-// ========== Helper: parse video URL to get platform info ==========
+// ========== Error Boundary ==========
+class ErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error, info) {
+    console.error('ErrorBoundary caught:', error, info);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: '3rem', textAlign: 'center' }}>
+          <h2 style={{ marginBottom: '1rem' }}>Something went wrong</h2>
+          <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+            {this.state.error?.message || 'An unexpected error occurred'}
+          </p>
+          <button
+            className="neu-btn neu-btn-primary"
+            onClick={() => this.setState({ hasError: false, error: null })}
+            style={{ padding: '0.75rem 2rem' }}
+          >
+            Try Again
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+// ========== Helper: parse video URL ==========
 function parseVideoUrl(url) {
-  if (!url) return { platform: 'unknown', embedUrl: null };
+  if (!url) return { platform: 'unknown', embedUrl: null, icon: '🔗' };
   try {
     const u = new URL(url);
-    // TikTok
     if (u.hostname.includes('tiktok.com')) {
       const videoId = u.pathname.split('/').pop();
-      return {
-        platform: 'tiktok',
-        embedUrl: `https://www.tiktok.com/embed/v2/${videoId}`,
-        icon: '♪'
-      };
+      return { platform: 'tiktok', embedUrl: `https://www.tiktok.com/embed/v2/${videoId}`, icon: '♪' };
     }
-    // Instagram Reels
     if (u.hostname.includes('instagram.com')) {
-      return {
-        platform: 'instagram',
-        embedUrl: `${u.href.endsWith('/') ? u.href : u.href + '/'}`,
-        icon: '◎'
-      };
+      return { platform: 'instagram', embedUrl: `${u.href.endsWith('/') ? u.href : u.href + '/'}`, icon: '◎' };
     }
-    // YouTube
     if (u.hostname.includes('youtube.com') || u.hostname.includes('youtu.be')) {
       let videoId;
       if (u.hostname.includes('youtu.be')) {
@@ -33,19 +56,10 @@ function parseVideoUrl(url) {
       } else {
         videoId = u.searchParams.get('v');
       }
-      return {
-        platform: 'youtube',
-        embedUrl: videoId ? `https://www.youtube.com/embed/${videoId}` : null,
-        icon: '▶'
-      };
+      return { platform: 'youtube', embedUrl: videoId ? `https://www.youtube.com/embed/${videoId}` : null, icon: '▶' };
     }
-    // Twitter/X
     if (u.hostname.includes('twitter.com') || u.hostname.includes('x.com')) {
-      return {
-        platform: 'twitter',
-        embedUrl: null,
-        icon: '𝕏'
-      };
+      return { platform: 'twitter', embedUrl: null, icon: '𝕏' };
     }
     return { platform: 'unknown', embedUrl: null, icon: '🔗' };
   } catch {
@@ -53,18 +67,48 @@ function parseVideoUrl(url) {
   }
 }
 
-// ========== Components ==========
-
-function Header({ page, setPage, user, onLogout }) {
+// ========== Skip to Content Link ==========
+function SkipLink() {
   return (
-    <header style={{
-      background: 'var(--bg-secondary)',
-      borderBottom: '1px solid rgba(255,255,255,0.04)',
-      position: 'sticky',
-      top: 0,
-      zIndex: 50,
-      backdropFilter: 'blur(10px)',
-    }}>
+    <a
+      href="#main-content"
+      className="skip-link"
+      style={{
+        position: 'absolute',
+        top: '-100%',
+        left: '1rem',
+        padding: '0.75rem 1.5rem',
+        background: 'var(--accent)',
+        color: 'white',
+        fontWeight: 700,
+        zIndex: 100,
+        textDecoration: 'none',
+        borderRadius: '0 0 4px 4px',
+      }}
+      onFocus={(e) => { e.target.style.top = '0'; }}
+      onBlur={(e) => { e.target.style.top = '-100%'; }}
+    >
+      Skip to content
+    </a>
+  );
+}
+
+// ========== Header ==========
+function Header({ page, setPage, user, onLogout }) {
+  const navRef = useRef(null);
+
+  return (
+    <header
+      role="banner"
+      style={{
+        background: 'var(--bg-secondary)',
+        borderBottom: '1px solid rgba(255,255,255,0.04)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 50,
+        backdropFilter: 'blur(10px)',
+      }}
+    >
       <div style={{
         maxWidth: '1200px',
         margin: '0 auto',
@@ -73,14 +117,20 @@ function Header({ page, setPage, user, onLogout }) {
         justifyContent: 'space-between',
         alignItems: 'center',
       }}>
-        <div
+        <button
           className="logo"
-          style={{ cursor: 'pointer' }}
+          style={{ cursor: 'pointer', background: 'none', border: 'none', color: 'inherit', fontFamily: 'inherit', fontSize: 'inherit', fontWeight: 'inherit', letterSpacing: 'inherit' }}
           onClick={() => setPage('feed')}
+          aria-label="OutScroll home"
         >
           out<span>scroll</span>
-        </div>
-        <nav style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
+        </button>
+        <nav
+          ref={navRef}
+          role="navigation"
+          aria-label="Main navigation"
+          style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}
+        >
           {[
             { id: 'feed', label: 'Feed' },
             { id: 'leaderboard', label: 'Ranks' },
@@ -91,6 +141,7 @@ function Header({ page, setPage, user, onLogout }) {
               className={`nav-item ${page === item.id ? 'active' : ''}`}
               onClick={() => setPage(item.id)}
               style={{ background: 'none', border: 'none' }}
+              aria-current={page === item.id ? 'page' : undefined}
             >
               {item.label}
             </button>
@@ -100,6 +151,7 @@ function Header({ page, setPage, user, onLogout }) {
               onClick={onLogout}
               className="nav-item"
               style={{ background: 'none', border: 'none' }}
+              aria-label="Log out"
             >
               Out
             </button>
@@ -110,67 +162,108 @@ function Header({ page, setPage, user, onLogout }) {
   );
 }
 
+// ========== VideoCard ==========
 function VideoCard({ video, onTrack, user }) {
   const [embedded, setEmbedded] = useState(false);
   const [tracked, setTracked] = useState({});
-  const { platform, embedUrl, icon } = parseVideoUrl(video.url);
+  const [pointsEarned, setPointsEarned] = useState(null);
+  const { platform, embedUrl, icon } = useMemo(() => parseVideoUrl(video.url), [video.url]);
+  const pointsRef = useRef(null);
 
-  const handlePlay = async () => {
+  const doTrack = useCallback(async (videoId, action) => {
+    if (!user) return;
+    const result = await onTrack(videoId, action);
+    if (result?.points_awarded) {
+      setPointsEarned(result.points_awarded);
+      if (pointsRef.current) {
+        pointsRef.current.textContent = `${result.points_awarded > 0 ? '+' : ''}${result.points_awarded}`;
+        pointsRef.current.style.opacity = '1';
+        setTimeout(() => {
+          if (pointsRef.current) pointsRef.current.style.opacity = '0';
+        }, 2000);
+      }
+    }
+  }, [user, onTrack]);
+
+  const handlePlay = useCallback(async () => {
     if (!user) return alert('Login to earn points!');
     setEmbedded(true);
     if (!tracked['play']) {
-      await onTrack(video.id, 'play');
+      await doTrack(video.id, 'play');
       setTracked(t => ({ ...t, play: true }));
     }
-  };
+  }, [user, tracked, doTrack, video.id]);
 
-  const handle50 = async () => {
+  const handle50 = useCallback(async () => {
     if (!user) return;
     if (!tracked['50_watch']) {
-      await onTrack(video.id, '50_watch');
+      await doTrack(video.id, '50_watch');
       setTracked(t => ({ ...t, '50_watch': true }));
     }
-  };
+  }, [user, tracked, doTrack, video.id]);
 
-  const handleFull = async () => {
+  const handleFull = useCallback(async () => {
     if (!user) return;
     if (!tracked['full_watch']) {
-      await onTrack(video.id, 'full_watch');
+      await doTrack(video.id, 'full_watch');
       setTracked(t => ({ ...t, full_watch: true }));
     }
-  };
+  }, [user, tracked, doTrack, video.id]);
 
-  const handleSkip = async () => {
+  const handleSkip = useCallback(async () => {
     if (!user) return;
     if (!tracked['skip']) {
-      await onTrack(video.id, 'skip');
+      await doTrack(video.id, 'skip');
       setTracked(t => ({ ...t, skip: true }));
     }
     setEmbedded(false);
-  };
+  }, [user, tracked, doTrack, video.id]);
 
   return (
-    <div className="neu-card animate-in" style={{ padding: '1.25rem', marginBottom: '1rem' }}>
+    <article className="neu-card animate-in" style={{ padding: '1.25rem', marginBottom: '1rem' }}>
+      {/* Points toast */}
+      <div
+        ref={pointsRef}
+        aria-live="polite"
+        style={{
+          position: 'absolute',
+          top: '-2rem',
+          right: '1rem',
+          fontWeight: 800,
+          fontFamily: "'Playfair Display', serif",
+          fontSize: '1.25rem',
+          color: pointsEarned && pointsEarned > 0 ? 'var(--success)' : 'var(--danger)',
+          opacity: 0,
+          transition: 'opacity 0.3s',
+          pointerEvents: 'none',
+        }}
+      />
+
       {/* Video header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <div style={{
-            width: '36px',
-            height: '36px',
-            borderRadius: '2px',
-            background: 'var(--bg-inset)',
-            boxShadow: 'var(--shadow-inset)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '1.1rem',
-          }}>
+          <div
+            aria-hidden="true"
+            style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: '2px',
+              background: 'var(--bg-inset)',
+              boxShadow: 'var(--shadow-inset)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '1.1rem',
+              flexShrink: 0,
+            }}
+          >
             {icon}
           </div>
           <div>
             <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{video.username}</div>
             <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              {platform} · {new Date(video.created_at).toLocaleDateString()}
+              <span aria-label={`Platform: ${platform}`}>{platform}</span> ·{' '}
+              <time dateTime={video.created_at}>{new Date(video.created_at).toLocaleDateString()}</time>
             </div>
           </div>
         </div>
@@ -181,7 +274,7 @@ function VideoCard({ video, onTrack, user }) {
           color: 'var(--text-muted)',
           letterSpacing: '0.05em',
         }}>
-          {video.watch_count || 0} watches
+          <span aria-label={`${video.watch_count || 0} people watched this`}>{video.watch_count || 0} watches</span>
         </div>
       </div>
 
@@ -190,18 +283,18 @@ function VideoCard({ video, onTrack, user }) {
         <div className="video-embed" style={{ marginBottom: '1rem' }}>
           <iframe
             src={embedUrl}
+            title={`Video by ${video.username} on ${platform}`}
             allowFullScreen
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           />
         </div>
       ) : (
-        <a
-          href={video.url}
-          target="_blank"
-          rel="noopener noreferrer"
+        <button
           className="neu-card-inset"
+          onClick={handlePlay}
           style={{
             display: 'block',
+            width: '100%',
             padding: '2rem',
             textAlign: 'center',
             color: 'var(--accent)',
@@ -209,23 +302,26 @@ function VideoCard({ video, onTrack, user }) {
             fontSize: '0.85rem',
             wordBreak: 'break-all',
             marginBottom: '1rem',
+            cursor: 'pointer',
+            background: 'var(--bg-inset)',
+            border: '1px solid rgba(255,255,255,0.02)',
+            boxShadow: 'var(--shadow-inset)',
           }}
-          onClick={(e) => {
-            e.preventDefault();
-            handlePlay();
-          }}
+          aria-label={`Play video by ${video.username} on ${platform}`}
         >
           {icon} Watch on {platform}
-        </a>
+        </button>
       )}
 
       {/* Action buttons */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }} role="group" aria-label="Watch tracking actions">
         <button
           className={`neu-btn ${tracked['play'] ? 'neu-btn-primary' : ''}`}
           onClick={handlePlay}
           style={{ padding: '0.6rem', fontSize: '0.7rem' }}
           disabled={tracked['play']}
+          aria-label={tracked['play'] ? 'Already played' : 'Play video, earn 5 points'}
+          aria-pressed={tracked['play']}
         >
           ▶ Play (+5)
         </button>
@@ -234,6 +330,8 @@ function VideoCard({ video, onTrack, user }) {
           onClick={handle50}
           style={{ padding: '0.6rem', fontSize: '0.7rem' }}
           disabled={tracked['50_watch']}
+          aria-label={tracked['50_watch'] ? 'Already marked 50%' : 'Mark 50% watched, earn 70 points'}
+          aria-pressed={tracked['50_watch']}
         >
           50% (+70)
         </button>
@@ -242,6 +340,8 @@ function VideoCard({ video, onTrack, user }) {
           onClick={handleFull}
           style={{ padding: '0.6rem', fontSize: '0.7rem' }}
           disabled={tracked['full_watch']}
+          aria-label={tracked['full_watch'] ? 'Already marked full' : 'Mark fully watched, earn 100 points'}
+          aria-pressed={tracked['full_watch']}
         >
           Full (+100)
         </button>
@@ -250,52 +350,91 @@ function VideoCard({ video, onTrack, user }) {
           onClick={handleSkip}
           style={{ padding: '0.6rem', fontSize: '0.7rem' }}
           disabled={tracked['skip']}
+          aria-label={tracked['skip'] ? 'Already skipped' : 'Skip video, lose 5 points'}
+          aria-pressed={tracked['skip']}
         >
           Skip (-5)
         </button>
       </div>
-    </div>
+    </article>
   );
 }
 
+// ========== FeedPage ==========
 function FeedPage({ user, onTrack }) {
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [offset, setOffset] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const feedRef = useRef(null);
+
+  const fetchVideos = useCallback(async (newOffset) => {
+    try {
+      const res = await axios.get(`${API}/videos/feed`, { params: { limit: 20, offset: newOffset } });
+      if (newOffset === 0) {
+        setVideos(res.data.videos);
+      } else {
+        setVideos(prev => [...prev, ...res.data.videos]);
+      }
+      setHasMore(res.data.videos.length === 20);
+    } catch {
+      // Error handled silently for feed
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    axios.get(`${API}/videos/feed`).then(res => {
-      setVideos(res.data.videos);
-      setLoading(false);
-    }).catch(() => setLoading(false));
-  }, []);
+    fetchVideos(0);
+  }, [fetchVideos]);
+
+  const loadMore = useCallback(() => {
+    const newOffset = offset + 20;
+    setOffset(newOffset);
+    fetchVideos(newOffset);
+  }, [offset, fetchVideos]);
 
   if (loading) {
     return (
       <div style={{ padding: '2rem 0' }}>
         {[1, 2, 3].map(i => (
-          <div key={i} className="loading-pulse neu-card" style={{ height: '200px', marginBottom: '1rem' }} />
+          <div key={i} className="loading-pulse neu-card" style={{ height: '200px', marginBottom: '1rem' }} role="presentation" />
         ))}
       </div>
     );
   }
 
   return (
-    <div>
+    <div ref={feedRef}>
       <h2 style={{ marginBottom: '1.5rem', fontSize: '1.5rem' }}>Feed</h2>
       {videos.length === 0 ? (
         <div className="neu-card-inset" style={{ padding: '3rem', textAlign: 'center' }}>
-          <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>📭</div>
+          <div aria-hidden="true" style={{ fontSize: '2rem', marginBottom: '1rem' }}>📭</div>
           <p style={{ color: 'var(--text-muted)' }}>No videos yet. Be the first to post!</p>
         </div>
       ) : (
-        videos.map(video => (
-          <VideoCard key={video.id} video={video} onTrack={onTrack} user={user} />
-        ))
+        <>
+          <div aria-label={`Feed of ${videos.length} videos`} role="feed">
+            {videos.map(video => (
+              <VideoCard key={video.id} video={video} onTrack={onTrack} user={user} />
+            ))}
+          </div>
+          {hasMore && (
+            <button
+              className="neu-btn"
+              onClick={loadMore}
+              style={{ width: '100%', padding: '0.875rem', marginTop: '0.5rem' }}
+            >
+              Load More
+            </button>
+          )}
+        </>
       )}
     </div>
   );
 }
 
+// ========== LeaderboardPage ==========
 function LeaderboardPage() {
   const [leaderboard, setLeaderboard] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -303,15 +442,28 @@ function LeaderboardPage() {
   useEffect(() => {
     axios.get(`${API}/leaderboard`).then(res => {
       setLeaderboard(res.data.leaderboard);
-      setLoading(false);
-    }).catch(() => setLoading(false));
+    }).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
-  const getRankStyle = (rank) => {
-    if (rank === 1) return { color: 'var(--gold)', textShadow: '0 0 15px rgba(255,215,0,0.3)' };
-    if (rank === 2) return { color: 'var(--silver)', textShadow: '0 0 15px rgba(192,192,192,0.2)' };
-    if (rank === 3) return { color: 'var(--bronze)', textShadow: '0 0 15px rgba(205,127,50,0.2)' };
-    return { color: 'var(--text-muted)' };
+  const getRankColor = (rank) => {
+    if (rank === 1) return 'var(--gold)';
+    if (rank === 2) return 'var(--silver)';
+    if (rank === 3) return 'var(--bronze)';
+    return 'var(--text-muted)';
+  };
+
+  const getRankLabel = (rank) => {
+    if (rank === 1) return '1st place, Gold';
+    if (rank === 2) return '2nd place, Silver';
+    if (rank === 3) return '3rd place, Bronze';
+    return `Rank ${rank}`;
+  };
+
+  const getRankEmoji = (rank) => {
+    if (rank === 1) return '🥇';
+    if (rank === 2) return '🥈';
+    if (rank === 3) return '🥉';
+    return null;
   };
 
   return (
@@ -320,85 +472,57 @@ function LeaderboardPage() {
 
       {/* Top 3 podium */}
       {leaderboard.length >= 3 && (
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: '1rem',
-          marginBottom: '2rem',
-        }}>
+        <div
+          style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '2rem' }}
+          role="list"
+          aria-label="Top 3 users"
+        >
           {/* 2nd place */}
-          <div className="neu-card" style={{
-            padding: '1.5rem',
-            textAlign: 'center',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            marginTop: '2rem',
-          }}>
-            <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🥈</div>
+          <div className="neu-card" role="listitem" style={{ padding: '1.5rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '2rem' }}>
+            <div aria-hidden="true" style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🥈</div>
             <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>{leaderboard[1]?.username}</div>
-            <div className="rank-silver" style={{ fontFamily: "'Playfair Display', serif", fontSize: '1.5rem', fontWeight: 900 }}>
+            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: '1.5rem', fontWeight: 900, color: 'var(--silver)' }}>
               {leaderboard[1]?.total_points.toLocaleString()}
             </div>
-            <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-              points
-            </div>
+            <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>points</div>
           </div>
           {/* 1st place */}
-          <div className="neu-card glow-gold" style={{
-            padding: '2rem',
-            textAlign: 'center',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            border: '1px solid rgba(255,215,0,0.15)',
-          }}>
-            <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>🥇</div>
+          <div className="neu-card glow-gold" role="listitem" style={{ padding: '2rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', border: '1px solid rgba(255,215,0,0.15)' }}>
+            <div aria-hidden="true" style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>🥇</div>
             <div style={{ fontWeight: 700, fontSize: '1.3rem' }}>{leaderboard[0]?.username}</div>
-            <div className="rank-gold" style={{ fontFamily: "'Playfair Display', serif", fontSize: '2rem', fontWeight: 900 }}>
+            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: '2rem', fontWeight: 900, color: 'var(--gold)', textShadow: '0 0 15px rgba(255,215,0,0.3)' }}>
               {leaderboard[0]?.total_points.toLocaleString()}
             </div>
-            <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-              points · #1
-            </div>
+            <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>points · #1</div>
           </div>
           {/* 3rd place */}
-          <div className="neu-card" style={{
-            padding: '1.5rem',
-            textAlign: 'center',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            marginTop: '3rem',
-          }}>
-            <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🥉</div>
+          <div className="neu-card" role="listitem" style={{ padding: '1.5rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '3rem' }}>
+            <div aria-hidden="true" style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🥉</div>
             <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>{leaderboard[2]?.username}</div>
-            <div className="rank-bronze" style={{ fontFamily: "'Playfair Display', serif", fontSize: '1.5rem', fontWeight: 900 }}>
+            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: '1.5rem', fontWeight: 900, color: 'var(--bronze)' }}>
               {leaderboard[2]?.total_points.toLocaleString()}
             </div>
-            <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-              points
-            </div>
+            <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>points</div>
           </div>
         </div>
       )}
 
       {/* Full table */}
       <div className="neu-card" style={{ padding: '1rem', overflow: 'hidden' }}>
-        <table className="leaderboard-table">
+        <table className="leaderboard-table" aria-label="Leaderboard rankings">
           <thead>
             <tr>
-              <th style={{ width: '60px' }}>Rank</th>
-              <th>Username</th>
-              <th style={{ textAlign: 'right' }}>Points</th>
+              <th scope="col" style={{ width: '60px' }}>Rank</th>
+              <th scope="col">Username</th>
+              <th scope="col" style={{ textAlign: 'right' }}>Points</th>
             </tr>
           </thead>
           <tbody>
-            {leaderboard.map((entry, idx) => (
-              <tr key={idx} style={{ animation: `fadeIn ${0.2 + idx * 0.02}s ease` }}>
+            {leaderboard.map((entry) => (
+              <tr key={entry.username} style={{ animation: `fadeIn 0.2s ease` }}>
                 <td>
-                  <span style={getRankStyle(entry.rank)}>
-                    {entry.rank <= 3 ? ['🥇', '🥈', '🥉'][entry.rank - 1] : `#${entry.rank}`}
+                  <span aria-label={getRankLabel(entry.rank)} style={{ color: getRankColor(entry.rank) }}>
+                    {getRankEmoji(entry.rank) || `#${entry.rank}`}
                   </span>
                 </td>
                 <td style={{ fontWeight: 600 }}>{entry.username}</td>
@@ -407,7 +531,7 @@ function LeaderboardPage() {
                   fontFamily: "'Playfair Display', serif",
                   fontWeight: 800,
                   fontSize: '1.05rem',
-                  color: entry.rank <= 3 ? getRankStyle(entry.rank).color : 'var(--text-primary)',
+                  color: entry.rank <= 3 ? getRankColor(entry.rank) : 'var(--text-primary)',
                 }}>
                   {entry.total_points.toLocaleString()}
                 </td>
@@ -425,10 +549,25 @@ function LeaderboardPage() {
   );
 }
 
+// ========== AuthPage ==========
 function AuthPage({ onLogin }) {
   const [mode, setMode] = useState('login');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const usernameRef = useRef(null);
+  const errorRef = useRef(null);
+
+  useEffect(() => {
+    if (error && errorRef.current) {
+      errorRef.current.focus();
+    }
+  }, [error]);
+
+  useEffect(() => {
+    if (usernameRef.current) {
+      usernameRef.current.focus();
+    }
+  }, [mode]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -473,16 +612,18 @@ function AuthPage({ onLogin }) {
           : 'Create an account to start earning points by watching content.'}
       </p>
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} noValidate>
         {mode === 'signup' && (
           <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.4rem', fontWeight: 600 }}>
+            <label htmlFor="auth-email" style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.4rem', fontWeight: 600 }}>
               Email
             </label>
             <input
+              id="auth-email"
               name="email"
               type="email"
               required
+              autoComplete="email"
               className="neu-input"
               style={{ width: '100%', padding: '0.875rem', fontSize: '0.9rem' }}
               placeholder="you@email.com"
@@ -490,28 +631,33 @@ function AuthPage({ onLogin }) {
           </div>
         )}
         <div style={{ marginBottom: '1rem' }}>
-          <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.4rem', fontWeight: 600 }}>
+          <label htmlFor="auth-username" style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.4rem', fontWeight: 600 }}>
             Username
           </label>
           <input
+            id="auth-username"
+            ref={usernameRef}
             name="username"
             required
             minLength={3}
             maxLength={20}
+            autoComplete="username"
             className="neu-input"
             style={{ width: '100%', padding: '0.875rem', fontSize: '0.9rem' }}
             placeholder="pick a username"
           />
         </div>
         <div style={{ marginBottom: '1.5rem' }}>
-          <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.4rem', fontWeight: 600 }}>
+          <label htmlFor="auth-password" style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.4rem', fontWeight: 600 }}>
             Password
           </label>
           <input
+            id="auth-password"
             name="password"
             type="password"
             required
             minLength={6}
+            autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
             className="neu-input"
             style={{ width: '100%', padding: '0.875rem', fontSize: '0.9rem' }}
             placeholder="min 6 characters"
@@ -519,14 +665,19 @@ function AuthPage({ onLogin }) {
         </div>
 
         {error && (
-          <div style={{
-            background: 'rgba(239,68,68,0.1)',
-            border: '1px solid rgba(239,68,68,0.2)',
-            color: 'var(--danger)',
-            padding: '0.75rem 1rem',
-            marginBottom: '1rem',
-            fontSize: '0.85rem',
-          }}>
+          <div
+            ref={errorRef}
+            role="alert"
+            tabIndex={-1}
+            style={{
+              background: 'rgba(239,68,68,0.1)',
+              border: '1px solid rgba(239,68,68,0.2)',
+              color: 'var(--danger)',
+              padding: '0.75rem 1rem',
+              marginBottom: '1rem',
+              fontSize: '0.85rem',
+            }}
+          >
             {error}
           </div>
         )}
@@ -536,6 +687,7 @@ function AuthPage({ onLogin }) {
           className="neu-btn neu-btn-primary"
           style={{ width: '100%', padding: '0.875rem', fontSize: '0.85rem' }}
           disabled={loading}
+          aria-busy={loading}
         >
           {loading ? '...' : mode === 'login' ? 'Sign In' : 'Create Account'}
         </button>
@@ -560,11 +712,13 @@ function AuthPage({ onLogin }) {
   );
 }
 
+// ========== SubmitPage ==========
 function SubmitPage({ user }) {
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
   const [hasPostedToday, setHasPostedToday] = useState(false);
+  const messageRef = useRef(null);
 
   useEffect(() => {
     axios.get(`${API}/me`, {
@@ -573,6 +727,12 @@ function SubmitPage({ user }) {
       setHasPostedToday(res.data.has_posted_today);
     }).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (message && messageRef.current) {
+      messageRef.current.focus();
+    }
+  }, [message]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -593,11 +753,11 @@ function SubmitPage({ user }) {
     }
   };
 
-  const platformHint = (() => {
+  const platformHint = useMemo(() => {
     if (!url) return null;
     const { platform, icon } = parseVideoUrl(url);
     return { platform, icon };
-  })();
+  }, [url]);
 
   return (
     <div style={{ maxWidth: '500px', margin: '3rem auto' }}>
@@ -607,12 +767,8 @@ function SubmitPage({ user }) {
       </p>
 
       {hasPostedToday && (
-        <div className="neu-card-inset" style={{
-          padding: '1.25rem',
-          marginBottom: '1.5rem',
-          textAlign: 'center',
-        }}>
-          <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>✓</div>
+        <div className="neu-card-inset" style={{ padding: '1.25rem', marginBottom: '1.5rem', textAlign: 'center' }}>
+          <div aria-hidden="true" style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>✓</div>
           <div style={{ fontWeight: 700 }}>You've posted today</div>
           <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '0.25rem' }}>
             Come back tomorrow to post again
@@ -622,7 +778,7 @@ function SubmitPage({ user }) {
 
       <form onSubmit={handleSubmit}>
         <div className="neu-card" style={{ padding: '1.5rem' }}>
-          <label style={{
+          <label htmlFor="submit-url" style={{
             display: 'block',
             fontSize: '0.7rem',
             color: 'var(--text-muted)',
@@ -635,6 +791,7 @@ function SubmitPage({ user }) {
           </label>
           <div style={{ position: 'relative' }}>
             <input
+              id="submit-url"
               type="url"
               value={url}
               onChange={e => setUrl(e.target.value)}
@@ -643,9 +800,10 @@ function SubmitPage({ user }) {
               style={{ width: '100%', padding: '0.875rem', fontSize: '0.9rem', paddingRight: '3rem' }}
               placeholder="https://www.tiktok.com/@creator/video/..."
               disabled={hasPostedToday}
+              aria-describedby="submit-url-hint"
             />
             {platformHint && (
-              <span style={{
+              <span aria-hidden="true" style={{
                 position: 'absolute',
                 right: '0.75rem',
                 top: '50%',
@@ -656,7 +814,7 @@ function SubmitPage({ user }) {
               </span>
             )}
           </div>
-          <div style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <div id="submit-url-hint" style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
             {['TikTok', 'Instagram', 'YouTube', 'Twitter/X'].map(p => (
               <span key={p} style={{
                 fontSize: '0.65rem',
@@ -674,14 +832,19 @@ function SubmitPage({ user }) {
         </div>
 
         {message && (
-          <div style={{
-            marginTop: '1rem',
-            padding: '0.75rem 1rem',
-            background: message.type === 'success' ? 'rgba(74,222,128,0.1)' : 'rgba(239,68,68,0.1)',
-            border: `1px solid ${message.type === 'success' ? 'rgba(74,222,128,0.2)' : 'rgba(239,68,68,0.2)'}`,
-            color: message.type === 'success' ? 'var(--success)' : 'var(--danger)',
-            fontSize: '0.85rem',
-          }}>
+          <div
+            ref={messageRef}
+            role="status"
+            tabIndex={-1}
+            style={{
+              marginTop: '1rem',
+              padding: '0.75rem 1rem',
+              background: message.type === 'success' ? 'rgba(74,222,128,0.1)' : 'rgba(239,68,68,0.1)',
+              border: `1px solid ${message.type === 'success' ? 'rgba(74,222,128,0.2)' : 'rgba(239,68,68,0.2)'}`,
+              color: message.type === 'success' ? 'var(--success)' : 'var(--danger)',
+              fontSize: '0.85rem',
+            }}
+          >
             {message.text}
           </div>
         )}
@@ -689,13 +852,9 @@ function SubmitPage({ user }) {
         <button
           type="submit"
           className="neu-btn neu-btn-primary"
-          style={{
-            width: '100%',
-            padding: '0.875rem',
-            fontSize: '0.85rem',
-            marginTop: '1rem',
-          }}
+          style={{ width: '100%', padding: '0.875rem', fontSize: '0.85rem', marginTop: '1rem' }}
           disabled={loading || hasPostedToday}
+          aria-busy={loading}
         >
           {loading ? 'Posting...' : 'Post Video'}
         </button>
@@ -704,6 +863,7 @@ function SubmitPage({ user }) {
   );
 }
 
+// ========== ProfilePage ==========
 function ProfilePage({ user }) {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -714,12 +874,11 @@ function ProfilePage({ user }) {
       headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
     }).then(res => {
       setProfile(res.data);
-      setLoading(false);
-    }).catch(() => setLoading(false));
+    }).catch(() => {}).finally(() => setLoading(false));
   }, [user]);
 
   if (!user) return <AuthPage onLogin={() => {}} />;
-  if (loading) return <div className="loading-pulse neu-card" style={{ height: '300px', margin: '2rem 0' }} />;
+  if (loading) return <div className="loading-pulse neu-card" style={{ height: '300px', margin: '2rem 0' }} role="status" aria-label="Loading profile" />;
 
   return (
     <div style={{ maxWidth: '600px', margin: '2rem auto' }}>
@@ -729,13 +888,8 @@ function ProfilePage({ user }) {
             <h2 style={{ fontSize: '1.75rem', marginBottom: '0.25rem' }}>{profile?.user?.username}</h2>
             <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{profile?.user?.email}</div>
           </div>
-          <div className="neu-card-inset" style={{
-            padding: '0.5rem 1rem',
-            textAlign: 'center',
-          }}>
-            <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-              Rank
-            </div>
+          <div className="neu-card-inset" style={{ padding: '0.5rem 1rem', textAlign: 'center' }}>
+            <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Rank</div>
             <div style={{
               fontFamily: "'Playfair Display', serif",
               fontSize: '1.75rem',
@@ -751,7 +905,7 @@ function ProfilePage({ user }) {
           <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.25rem' }}>
             Total Points
           </div>
-          <div className="points-display">
+          <div className="points-display" aria-label={`${profile?.user?.total_points.toLocaleString()} total points`}>
             {profile?.user?.total_points.toLocaleString()}
           </div>
         </div>
@@ -773,14 +927,14 @@ function ProfilePage({ user }) {
       {/* Points breakdown */}
       <div className="neu-card" style={{ padding: '1.5rem' }}>
         <h3 style={{ fontSize: '1rem', marginBottom: '1rem' }}>How to Earn Points</h3>
-        <div style={{ display: 'grid', gap: '0.5rem' }}>
+        <div style={{ display: 'grid', gap: '0.5rem' }} role="list" aria-label="Points system">
           {[
             { action: 'Click play', points: '+5', color: 'var(--accent)' },
             { action: 'Watch 50%', points: '+70', color: 'var(--success)' },
             { action: 'Full watch', points: '+100', color: 'var(--success)' },
             { action: 'Skip before 50%', points: '-5', color: 'var(--danger)' },
           ].map(item => (
-            <div key={item.action} className="neu-card-inset" style={{
+            <div key={item.action} role="listitem" className="neu-card-inset" style={{
               padding: '0.75rem 1rem',
               display: 'flex',
               justifyContent: 'space-between',
@@ -797,10 +951,11 @@ function ProfilePage({ user }) {
 }
 
 // ========== Main App ==========
-
 export default function App() {
   const [page, setPage] = useState('feed');
   const [user, setUser] = useState(null);
+  const [authChecked, setAuthChecked] = useState(false);
+  const mainRef = useRef(null);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -811,22 +966,24 @@ export default function App() {
         setUser(res.data.user);
       }).catch(() => {
         localStorage.removeItem('token');
-      });
+      }).finally(() => setAuthChecked(true));
+    } else {
+      setAuthChecked(true);
     }
   }, []);
 
-  const handleLogin = (userData) => {
+  const handleLogin = useCallback((userData) => {
     setUser(userData);
     setPage('feed');
-  };
+  }, []);
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     localStorage.removeItem('token');
     setUser(null);
     setPage('feed');
-  };
+  }, []);
 
-  const handleTrack = async (videoId, action) => {
+  const handleTrack = useCallback(async (videoId, action) => {
     try {
       const res = await axios.post(`${API}/engagement/track`, {
         video_id: videoId,
@@ -837,33 +994,61 @@ export default function App() {
       return res.data;
     } catch (err) {
       console.error('Track error:', err);
+      return null;
     }
-  };
+  }, []);
+
+  // Focus management: move focus to main content on page change
+  useEffect(() => {
+    if (mainRef.current) {
+      mainRef.current.focus();
+    }
+  }, [page]);
+
+  if (!authChecked) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="loading-pulse neu-card" style={{ width: '200px', height: '60px' }} role="status" aria-label="Loading" />
+      </div>
+    );
+  }
 
   return (
-    <div style={{ minHeight: '100vh' }}>
-      <Header page={page} setPage={setPage} user={user} onLogout={handleLogout} />
+    <ErrorBoundary>
+      <SkipLink />
+      <div style={{ minHeight: '100vh' }}>
+        <Header page={page} setPage={setPage} user={user} onLogout={handleLogout} />
 
-      <main style={{ maxWidth: '720px', margin: '0 auto', padding: '2rem 1.5rem' }}>
-        {page === 'feed' && <FeedPage user={user} onTrack={handleTrack} />}
-        {page === 'leaderboard' && <LeaderboardPage />}
-        {page === 'submit' && user && <SubmitPage user={user} />}
-        {page === 'profile' && (user ? <ProfilePage user={user} /> : <AuthPage onLogin={handleLogin} />)}
-      </main>
+        <main
+          id="main-content"
+          ref={mainRef}
+          tabIndex={-1}
+          role="main"
+          style={{ maxWidth: '720px', margin: '0 auto', padding: '2rem 1.5rem', outline: 'none' }}
+        >
+          {page === 'feed' && <FeedPage user={user} onTrack={handleTrack} />}
+          {page === 'leaderboard' && <LeaderboardPage />}
+          {page === 'submit' && user && <SubmitPage user={user} />}
+          {page === 'profile' && (user ? <ProfilePage user={user} /> : <AuthPage onLogin={handleLogin} />)}
+        </main>
 
-      <footer style={{
-        textAlign: 'center',
-        padding: '3rem 1.5rem',
-        color: 'var(--text-muted)',
-        fontSize: '0.75rem',
-        borderTop: '1px solid rgba(255,255,255,0.03)',
-        marginTop: '3rem',
-      }}>
-        <span className="logo" style={{ fontSize: '1rem' }}>out<span>scroll</span></span>
-        <div style={{ marginTop: '0.5rem' }}>
-          Free leaderboard for engagement · Post one link per day · Climb by watching others
-        </div>
-      </footer>
-    </div>
+        <footer
+          role="contentinfo"
+          style={{
+            textAlign: 'center',
+            padding: '3rem 1.5rem',
+            color: 'var(--text-muted)',
+            fontSize: '0.75rem',
+            borderTop: '1px solid rgba(255,255,255,0.03)',
+            marginTop: '3rem',
+          }}
+        >
+          <span className="logo" style={{ fontSize: '1rem' }}>out<span>scroll</span></span>
+          <div style={{ marginTop: '0.5rem' }}>
+            Free leaderboard for engagement · Post one link per day · Climb by watching others
+          </div>
+        </footer>
+      </div>
+    </ErrorBoundary>
   );
 }

@@ -98,6 +98,16 @@ h1, h2, h3, h4 {
   transform: translateY(0);
 }
 
+.neu-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.neu-input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .neu-btn-primary {
   background: var(--accent);
   color: white;
@@ -302,6 +312,40 @@ h1, h2, h3, h4 {
 .logo span {
   color: var(--accent);
   text-shadow: 0 0 20px rgba(91, 141, 239, 0.3);
+}
+
+/* Skip link */
+.skip-link:focus {
+  top: 0 !important;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .animate-in,
+  .loading-pulse,
+  .leaderboard-table tbody tr,
+  .neu-btn {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Mobile responsiveness */
+@media (max-width: 640px) {
+  .leaderboard-table {
+    font-size: 0.85rem;
+  }
+  .leaderboard-table th,
+  .leaderboard-table td {
+    padding: 0.625rem 0.5rem;
+  }
+  .neu-card {
+    padding: 1rem !important;
+  }
+  .nav-item {
+    padding: 0.35rem 0.5rem;
+    font-size: 0.75rem;
+  }
 }
 
 /* ========== Glow effects ========== */
