@@ -1,6 +1,7 @@
 import { useRef, useMemo, useState, useEffect, useCallback } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
+import DriftWall from './DriftWall.jsx';
 
 // ========== 3D Particle Field ==========
 function ParticleField({ count = 2000 }) {
@@ -753,7 +754,7 @@ export default function LandingPage({ onEnter }) {
         >
           <span className="logo" style={{ fontSize: '1rem' }}>out<span>scroll</span></span>
           <div style={{ marginTop: '0.5rem' }}>
-            Free leaderboard for engagement · Post one link per day · Climb by watching others
+            Free leaderboard for entrepreneurs · Post vertical ads · Climb by watching others
           </div>
         </footer>
       </div>
