@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef, useCallback, Component, lazy, Suspense } from 'react';
+import { Virtuoso } from 'react-virtuoso';
 import axios from 'axios';
 
 const API = '/api';
@@ -361,27 +362,47 @@ function VideoCard({ video, onTrack, user }) {
   );
 }
 
-// ========== FeedPage ==========
+// ========== FeedPage (Virtualized Infinite Scroll) ==========
+const LOADING_ITEMS = Array.from({ length: 5 }, (_, i) => ({ id: `loading-${i}`, _loading: true }));
+
+function LoadingCard() {
+  return (
+    <div style={{ padding: '1.25rem 0' }}>
+      <div className="loading-pulse neu-card" style={{ height: '200px', marginBottom: '1rem' }} role="presentation" />
+    </div>
+  );
+}
+
 function FeedPage({ user, onTrack }) {
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [offset, setOffset] = useState(0);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
-  const feedRef = useRef(null);
+  const offsetRef = useRef(0);
+  const fetchingRef = useRef(false);
+  const virtuosoRef = useRef(null);
 
-  const fetchVideos = useCallback(async (newOffset) => {
+  const fetchVideos = useCallback(async (offset, append = false) => {
+    if (fetchingRef.current) return;
+    fetchingRef.current = true;
+    if (append) setLoadingMore(true);
+
     try {
-      const res = await axios.get(`${API}/videos/feed`, { params: { limit: 20, offset: newOffset } });
-      if (newOffset === 0) {
-        setVideos(res.data.videos);
+      const res = await axios.get(`${API}/videos/feed`, { params: { limit: 20, offset } });
+      const newVideos = res.data.videos;
+      if (append) {
+        setVideos(prev => [...prev, ...newVideos]);
       } else {
-        setVideos(prev => [...prev, ...res.data.videos]);
+        setVideos(newVideos);
       }
-      setHasMore(res.data.videos.length === 20);
+      setHasMore(newVideos.length === 20);
+      offsetRef.current = offset + newVideos.length;
     } catch {
-      // Error handled silently for feed
+      // Error handled silently
     } finally {
       setLoading(false);
+      setLoadingMore(false);
+      fetchingRef.current = false;
     }
   }, []);
 
@@ -390,46 +411,89 @@ function FeedPage({ user, onTrack }) {
   }, [fetchVideos]);
 
   const loadMore = useCallback(() => {
-    const newOffset = offset + 20;
-    setOffset(newOffset);
-    fetchVideos(newOffset);
-  }, [offset, fetchVideos]);
+    if (!hasMore || fetchingRef.current) return;
+    fetchVideos(offsetRef.current, true);
+  }, [hasMore, fetchVideos]);
 
+  // Header component rendered above the virtual list
+  const ListHeader = useMemo(() => (
+    <div style={{ padding: '0 0 1rem 0' }}>
+      <h2 style={{ marginBottom: '0.5rem', fontSize: '1.5rem' }}>Feed</h2>
+      {!loading && videos.length > 0 && (
+        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+          {videos.length} video{videos.length !== 1 ? 's' : ''}
+        </div>
+      )}
+    </div>
+  ), [loading, videos.length]);
+
+  // Empty state
+  if (!loading && videos.length === 0) {
+    return (
+      <div>
+        <h2 style={{ marginBottom: '1.5rem', fontSize: '1.5rem' }}>Feed</h2>
+        <div className="neu-card-inset" style={{ padding: '3rem', textAlign: 'center' }}>
+          <div aria-hidden="true" style={{ fontSize: '2rem', marginBottom: '1rem' }}>📭</div>
+          <p style={{ color: 'var(--text-muted)' }}>No videos yet. Be the first to post!</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Initial loading state
   if (loading) {
     return (
-      <div style={{ padding: '2rem 0' }}>
-        {[1, 2, 3].map(i => (
-          <div key={i} className="loading-pulse neu-card" style={{ height: '200px', marginBottom: '1rem' }} role="presentation" />
-        ))}
+      <div>
+        <h2 style={{ marginBottom: '1.5rem', fontSize: '1.5rem' }}>Feed</h2>
+        <div style={{ padding: '2rem 0' }}>
+          {LOADING_ITEMS.map(item => (
+            <LoadingCard key={item.id} />
+          ))}
+        </div>
       </div>
     );
   }
 
   return (
-    <div ref={feedRef}>
-      <h2 style={{ marginBottom: '1.5rem', fontSize: '1.5rem' }}>Feed</h2>
-      {videos.length === 0 ? (
-        <div className="neu-card-inset" style={{ padding: '3rem', textAlign: 'center' }}>
-          <div aria-hidden="true" style={{ fontSize: '2rem', marginBottom: '1rem' }}>📭</div>
-          <p style={{ color: 'var(--text-muted)' }}>No videos yet. Be the first to post!</p>
+    <div role="feed" aria-label={`Feed of ${videos.length} videos`} aria-busy={loadingMore}>
+      <Virtuoso
+        ref={virtuosoRef}
+        style={{ height: 'calc(100vh - 200px)' }}
+        totalCount={videos.length + (loadingMore ? 1 : 0)}
+        itemContent={(index) => {
+          // Show loading skeleton at the bottom
+          if (index >= videos.length) {
+            return <LoadingCard />;
+          }
+          const video = videos[index];
+          return (
+            <div style={{ padding: '0.5rem 0' }}>
+              <VideoCard video={video} onTrack={onTrack} user={user} />
+            </div>
+          );
+        }}
+        endReached={loadMore}
+        overscan={200}
+        components={{ Header: () => ListHeader }}
+        computeItemKey={(index) => {
+          if (index >= videos.length) return `loading-${index}`;
+          return videos[index].id;
+        }}
+        itemSize={(index) => {
+          // Estimate item height for better scroll performance
+          if (index >= videos.length) return 220; // Loading skeleton
+          return 340; // Average VideoCard height
+        }}
+      />
+      {loadingMore && (
+        <div style={{ textAlign: 'center', padding: '1rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+          Loading more videos...
         </div>
-      ) : (
-        <>
-          <div aria-label={`Feed of ${videos.length} videos`} role="feed">
-            {videos.map(video => (
-              <VideoCard key={video.id} video={video} onTrack={onTrack} user={user} />
-            ))}
-          </div>
-          {hasMore && (
-            <button
-              className="neu-btn"
-              onClick={loadMore}
-              style={{ width: '100%', padding: '0.875rem', marginTop: '0.5rem' }}
-            >
-              Load More
-            </button>
-          )}
-        </>
+      )}
+      {!hasMore && videos.length > 0 && (
+        <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+          You've reached the end. Check back later for new content!
+        </div>
       )}
     </div>
   );
@@ -579,8 +643,8 @@ function AuthPage({ onLogin }) {
 
     try {
       if (mode === 'signup') {
-        if (data.password.length < 6) {
-          setError('Password must be at least 6 characters');
+        if (data.password.length < 8) {
+          setError('Password must be at least 8 characters');
           setLoading(false);
           return;
         }
@@ -657,11 +721,11 @@ function AuthPage({ onLogin }) {
             name="password"
             type="password"
             required
-            minLength={6}
+            minLength={8}
             autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
             className="neu-input"
             style={{ width: '100%', padding: '0.875rem', fontSize: '0.9rem' }}
-            placeholder="min 6 characters"
+            placeholder="min 8 chars, upper + lower + number"
           />
         </div>
 
