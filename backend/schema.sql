@@ -8,6 +8,11 @@ CREATE TABLE users (
   password_hash VARCHAR(255) NOT NULL,
   total_points INTEGER DEFAULT 0,
   last_post_date DATE,
+  business_name VARCHAR(100),
+  business_website VARCHAR(500),
+  business_description TEXT,
+  approval_status VARCHAR(20) DEFAULT 'pending' CHECK (approval_status IN ('pending', 'approved', 'rejected')),
+  rejection_reason TEXT,
   created_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -42,6 +47,7 @@ CREATE TABLE notifications (
 
 CREATE INDEX idx_videos_created ON videos(created_at DESC);
 CREATE INDEX idx_users_points ON users(total_points DESC);
+CREATE INDEX idx_users_approval ON users(approval_status);
 CREATE INDEX idx_engagements_user ON engagements(user_id);
 CREATE INDEX idx_engagements_video ON engagements(video_id);
 CREATE INDEX idx_notifications_user ON notifications(user_id, read, created_at DESC);

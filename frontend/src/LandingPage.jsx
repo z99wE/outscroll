@@ -321,11 +321,11 @@ export default function LandingPage({ onEnter }) {
               lineHeight: 1.6,
               marginBottom: '3rem',
             }}>
-              Post one short-form link per day. Watch others' content.
+              Post your business video ads. Watch other entrepreneurs.
               Earn points. Climb the leaderboard.
               <br />
               <span style={{ color: 'var(--text-muted)', fontSize: '0.9em' }}>
-                No payment. No complexity. Just engagement.
+                Free for businesses. No payment. No complexity. Just engagement.
               </span>
             </p>
           </ScrollReveal>
@@ -389,6 +389,62 @@ export default function LandingPage({ onEnter }) {
           </div>
         </section>
 
+        {/* ===== DOOMSCROLL WALL ===== */}
+        <section style={{
+          padding: '4rem 0',
+          position: 'relative',
+          overflow: 'hidden',
+          background: 'linear-gradient(180deg, var(--bg-primary) 0%, #060010 30%, #060010 70%, var(--bg-primary) 100%)',
+        }}>
+          <ScrollReveal>
+            <h2 style={{
+              textAlign: 'center',
+              fontSize: 'clamp(1.5rem, 3vw, 2.5rem)',
+              marginBottom: '0.5rem',
+              position: 'relative',
+              zIndex: 3,
+            }}>
+              always watching
+            </h2>
+            <p style={{
+              textAlign: 'center',
+              color: 'var(--text-muted)',
+              marginBottom: '1.5rem',
+              fontSize: '0.95rem',
+              position: 'relative',
+              zIndex: 3,
+            }}>
+              Businesses posting. Entrepreneurs engaging. The ladder moves.
+            </p>
+          </ScrollReveal>
+          <div style={{ height: '400px', position: 'relative', zIndex: 2 }}>
+            <DriftWall
+              items={[
+                { image: 'https://picsum.photos/id/1015/300/400', title: 'Startup Ad' },
+                { image: 'https://picsum.photos/id/1025/300/400', title: 'Product Demo' },
+                { image: 'https://picsum.photos/id/1039/300/400', title: 'Brand Story' },
+                { image: 'https://picsum.photos/id/1042/300/400', title: 'Behind Scenes' },
+                { image: 'https://picsum.photos/id/1043/300/400', title: 'Service Reel' },
+                { image: 'https://picsum.photos/id/1047/300/400', title: 'Culture Vid' },
+                { image: 'https://picsum.photos/id/1050/300/400', title: 'Testimonial' },
+                { image: 'https://picsum.photos/id/1055/300/400', title: 'Launch Clip' },
+              ]}
+              columns={8}
+              tileWidth={100}
+              tileHeight={140}
+              gap={4}
+              speed={25}
+              direction="up"
+              tilt={12}
+              parallax={0.7}
+              depth={80}
+              fade={0.5}
+              overlayColor="#060010"
+              pauseOnHover
+            />
+          </div>
+        </section>
+
         {/* ===== HOW IT WORKS ===== */}
         <section id="how-it-works" style={{ padding: '8rem 2rem', maxWidth: '1100px', margin: '0 auto' }}>
           <ScrollReveal>
@@ -405,7 +461,7 @@ export default function LandingPage({ onEnter }) {
               marginBottom: '4rem',
               fontSize: '1.1rem',
             }}>
-              Three steps. Zero complexity.
+              Four steps. Zero complexity.
             </p>
           </ScrollReveal>
 
@@ -417,29 +473,29 @@ export default function LandingPage({ onEnter }) {
             {[
               {
                 step: '01',
-                title: 'Post a Link',
-                desc: "Paste one TikTok, Instagram Reel, or YouTube Short link per day. That's it.",
-                icon: '🔗',
+                title: 'Submit Your Business',
+                desc: "Sign up, submit your website for approval. We verify you're a legitimate business.",
+                icon: '🏢',
                 color: 'var(--accent)',
               },
               {
                 step: '02',
-                title: 'Watch Others',
-                desc: "Watch other creators' short-form content. Every view counts.",
-                icon: '▶',
+                title: 'Post Your Ad',
+                desc: "Once approved, post one TikTok, Reel, or Short per day showcasing your business.",
+                icon: '📱',
                 color: 'var(--success)',
               },
               {
                 step: '03',
-                title: 'Earn Points',
-                desc: 'Get +5 for playing, +70 for 50% watch, +100 for full watch. Skip and you lose 5.',
+                title: 'Watch & Earn',
+                desc: 'Watch other businesses\' content. Earn +5 to +100 points per video. Engagement is everything.',
                 icon: '⚡',
                 color: 'var(--accent)',
               },
               {
                 step: '04',
                 title: 'Climb the Ladder',
-                desc: 'Your engagement score ranks you. #1 is the person who watches the most content.',
+                desc: 'Your engagement score ranks you against every business. #1 watches the most content.',
                 icon: '🏆',
                 color: 'var(--gold)',
               },
@@ -619,9 +675,10 @@ export default function LandingPage({ onEnter }) {
               </thead>
               <tbody>
                 {[
-                  { feature: 'Payment', outscroll: 'Free', other: 'Pay to rank' },
-                  { feature: 'Leaderboard', outscroll: 'Engagement-based', other: 'Follower count' },                   { feature: 'Content', outscroll: 'Reels, Shorts, TikTok', other: 'Limited' },
-                  { feature: 'Creator incentive', outscroll: 'Traffic + discovery', other: 'Direct ranking' },
+                  { feature: 'Cost', outscroll: 'Free forever', other: 'Pay to rank' },
+                  { feature: 'Leaderboard', outscroll: 'Engagement-based', other: 'Follower count' },
+                  { feature: 'Content', outscroll: 'Reels, Shorts, TikTok', other: 'Limited formats' },
+                  { feature: 'Approval', outscroll: 'Verified businesses only', other: 'Anyone' },
                 ].map((row, i) => (
                   <ScrollReveal key={row.feature} delay={i * 0.1}>
                     <tr>

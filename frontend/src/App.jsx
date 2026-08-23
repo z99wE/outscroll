@@ -4,6 +4,9 @@ import axios from 'axios';
 
 const API = '/api';
 const LandingPage = lazy(() => import('./LandingPage.jsx'));
+import DriftWall from './DriftWall.jsx';
+import { FAQPage, ContentPolicyPage, PrivacyPolicyPage, TermsPage, LegacyDisclaimerPage } from './LegalPages.jsx';
+import BusinessApprovalPage from './BusinessApprovalPage.jsx';
 
 // ========== Error Boundary ==========
 class ErrorBoundary extends Component {
@@ -133,7 +136,12 @@ function Header({ page, setPage, user, onLogout, unreadCount = 0 }) {
           {[
             { id: 'feed', label: 'Feed' },
             { id: 'leaderboard', label: 'Ranks' },
-            ...(user ? [{ id: 'submit', label: 'Post' }, { id: 'profile', label: 'Profile' }] : []),
+            { id: 'faq', label: 'FAQ' },
+            ...(user ? [
+              { id: 'submit', label: 'Post' },
+              { id: 'business', label: 'Business' },
+              { id: 'profile', label: 'Profile' },
+            ] : []),
           ].map(item => (
             <button
               key={item.id}
@@ -977,7 +985,23 @@ function ProfilePage({ user }) {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
           <div>
             <h2 style={{ fontSize: '1.75rem', marginBottom: '0.25rem' }}>{profile?.user?.username}</h2>
-            <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{profile?.user?.email}</div>
+            {profile?.user?.business_name && (
+              <div style={{ color: 'var(--accent)', fontSize: '0.85rem', fontWeight: 600 }}>{profile.user.business_name}</div>
+            )}
+            <div style={{
+              display: 'inline-block',
+              padding: '0.2rem 0.5rem',
+              marginTop: '0.25rem',
+              fontSize: '0.65rem',
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              borderRadius: '2px',
+              background: profile?.user?.approval_status === 'approved' ? 'rgba(74,222,128,0.15)' : profile?.user?.approval_status === 'rejected' ? 'rgba(239,68,68,0.15)' : 'rgba(251,191,36,0.15)',
+              color: profile?.user?.approval_status === 'approved' ? 'var(--success)' : profile?.user?.approval_status === 'rejected' ? 'var(--danger)' : 'var(--warning)',
+            }}>
+              {profile?.user?.approval_status || 'pending'}
+            </div>
           </div>
           <div className="neu-card-inset" style={{ padding: '0.5rem 1rem', textAlign: 'center' }}>
             <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Rank</div>
@@ -1228,6 +1252,12 @@ export default function App() {
           {page === 'submit' && user && <SubmitPage user={user} />}
           {page === 'profile' && (user ? <ProfilePage user={user} /> : <AuthPage onLogin={handleLogin} />)}
           {page === 'notifications' && user && <NotificationsPage onMarkRead={() => setUnreadCount(0)} />}
+          {page === 'faq' && <FAQPage />}
+          {page === 'content-policy' && <ContentPolicyPage />}
+          {page === 'privacy' && <PrivacyPolicyPage />}
+          {page === 'terms' && <TermsPage />}
+          {page === 'legacy' && <LegacyDisclaimerPage />}
+          {page === 'business' && user && <BusinessApprovalPage />}
         </main>
 
         <footer
@@ -1242,8 +1272,28 @@ export default function App() {
           }}
         >
           <span className="logo" style={{ fontSize: '1rem' }}>out<span>scroll</span></span>
-          <div style={{ marginTop: '0.5rem' }}>
-            Free leaderboard for engagement · Post one link per day · Climb by watching others
+          <div style={{ marginTop: '0.5rem', marginBottom: '1rem' }}>
+            Free leaderboard for entrepreneurs · Post vertical ads · Climb by watching others
+          </div>
+          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+            {[
+              { id: 'faq', label: 'FAQ' },
+              { id: 'content-policy', label: 'Content Policy' },
+              { id: 'privacy', label: 'Privacy Policy' },
+              { id: 'terms', label: 'Terms' },
+              { id: 'legacy', label: 'Disclaimer' },
+            ].map(link => (
+              <button
+                key={link.id}
+                onClick={() => setPage(link.id)}
+                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.75rem' }}
+              >
+                {link.label}
+              </button>
+            ))}
+          </div>
+          <div style={{ marginTop: '0.75rem', fontSize: '0.65rem' }}>
+            © 2026 OutScroll · DPDP & GDPR Compliant
           </div>
         </footer>
       </div>

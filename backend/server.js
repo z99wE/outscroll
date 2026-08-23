@@ -187,7 +187,7 @@ app.get('/api/health', async (req, res) => {
 
 // ========== SIGNUP ==========
 app.post('/api/auth/signup', authLimiter, async (req, res) => {
-  const { email, username, password } = req.body;
+  const { email, username, password, business_name, business_website, business_description } = req.body;
 
   if (!email || !username || !password) {
     return res.status(400).json({ error: 'Missing fields' });
@@ -218,8 +218,10 @@ app.post('/api/auth/signup', authLimiter, async (req, res) => {
   try {
     const hashedPwd = await bcrypt.hash(password, 12);
     const result = await pool.query(
-      'INSERT INTO users (email, username, password_hash) VALUES ($1, $2, $3) RETURNING id, username, email, total_points',
-      [email.toLowerCase().trim(), cleanUsername, hashedPwd]
+      `INSERT INTO users (email, username, password_hash, business_name, business_website, business_description)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING id, username, total_points, approval_status`,
+      [email.toLowerCase().trim(), cleanUsername, hashedPwd, business_name || null, business_website || null, business_description || null]
     );
     const user = result.rows[0];
     const { accessToken, refreshToken } = generateTokenPair(user);
@@ -254,7 +256,7 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
 
   try {
     const result = await pool.query(
-      'SELECT id, username, email, password_hash, total_points FROM users WHERE username = $1',
+      'SELECT id, username, email, password_hash, total_points, approval_status, business_name, business_website FROM users WHERE username = $1',
       [username.trim()]
     );
     if (result.rows.length === 0) {
@@ -332,6 +334,13 @@ app.get('/api/videos/feed', async (req, res) => {
 app.post('/api/videos/submit', authenticate, submitLimiter, async (req, res) => {
   const { url } = req.body;
   const user_id = req.user.id;
+
+  // Check approval status
+  const userCheck = await pool.query('SELECT approval_status FROM users WHERE id = $1', [user_id]);
+  if (userCheck.rows.length === 0) return res.status(404).json({ error: 'User not found' });
+  if (userCheck.rows[0].approval_status !== 'approved') {
+    return res.status(403).json({ error: 'Your business profile is pending approval. You can post videos once approved.' });
+  }
 
   if (!url || typeof url !== 'string') {
     return res.status(400).json({ error: 'URL is required' });
@@ -512,7 +521,9 @@ app.get('/api/users/:user_id', async (req, res) => {
 app.get('/api/me', authenticate, async (req, res) => {
   try {
     const user = await pool.query(
-      'SELECT id, username, email, total_points, created_at FROM users WHERE id = $1',
+      `SELECT id, username, total_points, created_at,
+       business_name, business_website, business_description, approval_status, rejection_reason
+       FROM users WHERE id = $1`,
       [req.user.id]
     );
     if (user.rows.length === 0) return res.status(404).json({ error: 'User not found' });
@@ -534,6 +545,77 @@ app.get('/api/me', authenticate, async (req, res) => {
     console.error('My profile error:', err);
     res.status(500).json({ error: 'Server error' });
   }
+});
+
+// ========== BUSINESS SUBMISSION ==========
+app.put('/api/business/submit', authenticate, async (req, res) => {
+  const { business_name, business_website, business_description } = req.body;
+  if (!business_name || !business_website) {
+    return res.status(400).json({ error: 'Business name and website are required' });
+  }
+
+  // Validate URL
+  try { new URL(business_website); } catch {
+    return res.status(400).json({ error: 'Invalid website URL' });
+  }
+
+  try {
+    await pool.query(
+      `UPDATE users SET business_name = $1, business_website = $2, business_description = $3, approval_status = 'pending'
+       WHERE id = $4`,
+      [business_name, business_website.trim(), business_description || null, req.user.id]
+    );
+    res.json({ success: true, message: 'Business profile submitted for review' });
+  } catch (err) {
+    console.error('Business submit error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.get('/api/business/status', authenticate, async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT business_name, business_website, business_description, approval_status, rejection_reason FROM users WHERE id = $1',
+      [req.user.id]
+    );
+    res.json(result.rows[0] || {});
+  } catch (err) {
+    console.error('Business status error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// ========== CONTENT POLICY ==========
+app.get('/api/content-policy', (req, res) => {
+  res.json({
+    policy: {
+      title: 'OutScroll Content Policy',
+      lastUpdated: '2026-08-23',
+      allowed: [
+        'Business promotion videos (vertical format: Reels, Shorts, TikTok)',
+        'Product demos and showcases',
+        'Company culture and behind-the-scenes content',
+        'Service explanations and tutorials',
+        'Customer testimonials (with consent)',
+      ],
+      prohibited: [
+        'Pornography, sexually explicit content, or adult material of any kind',
+        'Gambling, betting, or casino-related content',
+        'Weapons, firearms, ammunition, or military equipment sales',
+        'Drugs, controlled substances, or drug paraphernalia',
+        'Hate speech, discrimination, or harassment of any group',
+        'Misinformation, fake news, or deliberately misleading content',
+        'Scams, pyramid schemes, or fraudulent business opportunities',
+        'Content that violates any applicable local, state, or international law',
+        'Violence, graphic content, or content that promotes harm',
+        'Spam, repeated identical submissions, or engagement farming',
+        'Non-vertical video content (landscape videos, podcasts, etc.)',
+        'Content that infringes on third-party intellectual property rights',
+      ],
+      enforcement: 'Violations result in immediate account suspension and content removal. Repeated violations result in permanent ban.',
+      reporting: 'Report violations through the platform. All reports are reviewed within 24 hours.',
+    }
+  });
 });
 
 // ========== NOTIFICATIONS ==========
