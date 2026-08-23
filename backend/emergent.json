@@ -1,0 +1,9 @@
+{
+  "runtime": "node18",
+  "handler": "server.js",
+  "memory": 512,
+  "environment": {
+    "DATABASE_URL": "${DATABASE_URL}",
+    "JWT_SECRET": "${JWT_SECRET}"
+  }
+}

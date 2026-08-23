@@ -1,0 +1,339 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800;900&family=Inter:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+/* ========== OutScroll - NeoPop Design System ========== */
+
+:root {
+  /* Base colors */
+  --bg-primary: #121212;
+  --bg-secondary: #1a1a1a;
+  --bg-card: #1e1e1e;
+  --bg-elevated: #252525;
+  --bg-inset: #161616;
+
+  /* Text */
+  --text-primary: #f5f5f5;
+  --text-secondary: #a0a0a0;
+  --text-muted: #6b6b6b;
+
+  /* Accent */
+  --accent: #5b8def;
+  --accent-hover: #4a7de0;
+  --accent-glow: rgba(91, 141, 239, 0.15);
+
+  /* Points colors */
+  --gold: #ffd700;
+  --silver: #c0c0c0;
+  --bronze: #cd7f32;
+
+  /* Success/danger */
+  --success: #4ade80;
+  --danger: #ef4444;
+  --warning: #fbbf24;
+
+  /* Neumorphic shadows */
+  --shadow-raised: 4px 4px 8px rgba(0, 0, 0, 0.6), -4px -4px 8px rgba(255, 255, 255, 0.03);
+  --shadow-inset: inset 3px 3px 6px rgba(0, 0, 0, 0.5), inset -3px -3px 6px rgba(255, 255, 255, 0.02);
+  --shadow-elevated: 6px 6px 12px rgba(0, 0, 0, 0.7), -6px -6px 12px rgba(255, 255, 255, 0.03);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'Inter', -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+/* ========== Typography ========== */
+
+h1, h2, h3, h4 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+/* ========== Neumorphic Components ========== */
+
+.neu-card {
+  background: var(--bg-card);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  box-shadow: var(--shadow-raised);
+}
+
+.neu-card-inset {
+  background: var(--bg-inset);
+  border: 1px solid rgba(255, 255, 255, 0.02);
+  box-shadow: var(--shadow-inset);
+}
+
+.neu-btn {
+  background: var(--bg-elevated);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: var(--shadow-raised);
+  color: var(--text-primary);
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.8rem;
+}
+
+.neu-btn:hover {
+  background: var(--bg-card);
+  box-shadow: var(--shadow-elevated);
+  transform: translateY(-1px);
+}
+
+.neu-btn:active {
+  box-shadow: var(--shadow-inset);
+  transform: translateY(0);
+}
+
+.neu-btn-primary {
+  background: var(--accent);
+  color: white;
+  border: 1px solid rgba(91, 141, 239, 0.3);
+  box-shadow: 0 4px 15px rgba(91, 141, 239, 0.25), var(--shadow-raised);
+}
+
+.neu-btn-primary:hover {
+  background: var(--accent-hover);
+  box-shadow: 0 6px 20px rgba(91, 141, 239, 0.35), var(--shadow-elevated);
+}
+
+.neu-btn-danger {
+  background: var(--danger);
+  color: white;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.neu-btn-success {
+  background: var(--success);
+  color: #121212;
+  border: 1px solid rgba(74, 222, 128, 0.3);
+}
+
+.neu-btn-warning {
+  background: var(--warning);
+  color: #121212;
+  border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+.neu-input {
+  background: var(--bg-inset);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: var(--shadow-inset);
+  color: var(--text-primary);
+  font-family: 'Inter', sans-serif;
+  transition: border-color 0.2s ease;
+}
+
+.neu-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: var(--shadow-inset), 0 0 0 2px var(--accent-glow);
+}
+
+.neu-input::placeholder {
+  color: var(--text-muted);
+}
+
+/* ========== Navigation ========== */
+
+.nav-item {
+  position: relative;
+  padding: 0.5rem 1rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.nav-item:hover {
+  color: var(--text-secondary);
+}
+
+.nav-item.active {
+  color: var(--accent);
+}
+
+.nav-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+}
+
+/* ========== Rank Badges ========== */
+
+.rank-gold {
+  color: var(--gold);
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+}
+
+.rank-silver {
+  color: var(--silver);
+  text-shadow: 0 0 10px rgba(192, 192, 192, 0.3);
+}
+
+.rank-bronze {
+  color: var(--bronze);
+  text-shadow: 0 0 10px rgba(205, 127, 50, 0.3);
+}
+
+/* ========== Video Embeds ========== */
+
+.video-embed {
+  position: relative;
+  width: 100%;
+  padding-bottom: 56.25%; /* 16:9 */
+  overflow: hidden;
+  background: var(--bg-inset);
+  box-shadow: var(--shadow-inset);
+}
+
+.video-embed iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* ========== Scrollbar ========== */
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--bg-elevated);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* ========== Points Display ========== */
+
+.points-display {
+  font-family: 'Playfair Display', serif;
+  font-weight: 900;
+  font-size: 2rem;
+  background: linear-gradient(135deg, var(--accent), var(--success));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ========== Table ========== */
+
+.leaderboard-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 4px;
+}
+
+.leaderboard-table th {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.leaderboard-table td {
+  padding: 0.875rem 1rem;
+}
+
+.leaderboard-table tbody tr {
+  background: var(--bg-card);
+  box-shadow: var(--shadow-raised);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  transition: transform 0.15s;
+}
+
+.leaderboard-table tbody tr:hover {
+  transform: translateX(4px);
+}
+
+.leaderboard-table tbody tr td:first-child {
+  border-radius: 2px 0 0 2px;
+}
+
+.leaderboard-table tbody tr td:last-child {
+  border-radius: 0 2px 2px 0;
+}
+
+/* ========== Logo ========== */
+
+.logo {
+  font-family: 'Playfair Display', serif;
+  font-weight: 900;
+  font-size: 1.75rem;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+}
+
+.logo span {
+  color: var(--accent);
+  text-shadow: 0 0 20px rgba(91, 141, 239, 0.3);
+}
+
+/* ========== Glow effects ========== */
+
+.glow-accent {
+  box-shadow: 0 0 20px rgba(91, 141, 239, 0.15);
+}
+
+.glow-gold {
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.1);
+}
+
+/* ========== Animations ========== */
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-in {
+  animation: fadeIn 0.3s ease forwards;
+}
+
+/* ========== Loading ========== */
+
+.loading-pulse {
+  background: linear-gradient(90deg, var(--bg-card), var(--bg-elevated), var(--bg-card));
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}

@@ -1,0 +1,34 @@
+-- OutScroll Database Schema
+-- Run this in your Supabase SQL Editor
+
+CREATE TABLE users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email VARCHAR(255) UNIQUE NOT NULL,
+  username VARCHAR(50) UNIQUE NOT NULL,
+  password_hash VARCHAR(255) NOT NULL,
+  total_points INTEGER DEFAULT 0,
+  last_post_date DATE,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE videos (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  url VARCHAR(500) NOT NULL,
+  submitted_by UUID NOT NULL REFERENCES users(id),
+  created_at TIMESTAMP DEFAULT NOW(),
+  watch_count INTEGER DEFAULT 0
+);
+
+CREATE TABLE engagements (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id),
+  video_id UUID NOT NULL REFERENCES videos(id),
+  action VARCHAR(50) NOT NULL,
+  points INTEGER NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX idx_videos_created ON videos(created_at DESC);
+CREATE INDEX idx_users_points ON users(total_points DESC);
+CREATE INDEX idx_engagements_user ON engagements(user_id);
+CREATE INDEX idx_engagements_video ON engagements(video_id);
