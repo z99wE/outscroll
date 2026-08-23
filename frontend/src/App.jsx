@@ -1,7 +1,8 @@
-import { useState, useEffect, useMemo, useRef, useCallback, Component } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback, Component, lazy, Suspense } from 'react';
 import axios from 'axios';
 
 const API = '/api';
+const LandingPage = lazy(() => import('./LandingPage.jsx'));
 
 // ========== Error Boundary ==========
 class ErrorBoundary extends Component {
@@ -955,6 +956,7 @@ export default function App() {
   const [page, setPage] = useState('feed');
   const [user, setUser] = useState(null);
   const [authChecked, setAuthChecked] = useState(false);
+  const [showLanding, setShowLanding] = useState(true);
   const mainRef = useRef(null);
 
   useEffect(() => {
@@ -1010,6 +1012,17 @@ export default function App() {
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div className="loading-pulse neu-card" style={{ width: '200px', height: '60px' }} role="status" aria-label="Loading" />
       </div>
+    );
+  }
+
+  // Show landing page if not authenticated and haven't entered yet
+  if (showLanding && !user) {
+    return (
+      <ErrorBoundary>
+        <Suspense fallback={null}>
+          <LandingPage onEnter={() => setShowLanding(false)} />
+        </Suspense>
+      </ErrorBoundary>
     );
   }
 

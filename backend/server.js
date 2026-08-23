@@ -2,13 +2,16 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const morgan = require('morgan');
 const { Pool } = require('pg');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 require('dotenv').config();
 
 // ========== CONFIG ==========
 const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || JWT_SECRET + '-refresh';
 if (!JWT_SECRET) {
   console.error('FATAL: JWT_SECRET environment variable is required');
   process.exit(1);
@@ -16,6 +19,10 @@ if (!JWT_SECRET) {
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 const PORT = process.env.PORT || 3000;
+const ACCESS_TOKEN_EXPIRY = '15m';
+const REFRESH_TOKEN_EXPIRY = '7d';
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOCKOUT_DURATION_MINUTES = 15;
 
 const app = express();
 const pool = new Pool({
@@ -26,16 +33,36 @@ const pool = new Pool({
 });
 
 // ========== MIDDLEWARE ==========
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdnjs.cloudflare.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com", "https://cdnjs.cloudflare.com"],
+      imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'"],
+      frameSrc: ["'self'", "https://www.youtube.com", "https://www.tiktok.com", "https://www.instagram.com"],
+      objectSrc: ["'none'"],
+      baseUri: ["'self'"],
+      formAction: ["'self'"],
+    },
+  },
+}));
 app.use(cors({
   origin: FRONTEND_URL,
   credentials: true,
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 app.use(express.json({ limit: '10kb' }));
+app.use(morgan('combined', {
+  skip: (req) => req.url === '/api/health',
+}));
 
 // ========== RATE LIMITERS ==========
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 15 * 60 * 1000,
   max: 20,
   message: { error: 'Too many attempts, please try again later' },
   standardHeaders: true,
@@ -43,7 +70,7 @@ const authLimiter = rateLimit({
 });
 
 const trackLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
+  windowMs: 60 * 1000,
   max: 30,
   message: { error: 'Too many requests, slow down' },
   standardHeaders: true,
@@ -51,22 +78,85 @@ const trackLimiter = rateLimit({
 });
 
 const submitLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hour
+  windowMs: 60 * 60 * 1000,
   max: 5,
   message: { error: 'Too many submissions, please try again later' },
   standardHeaders: true,
   legacyHeaders: false,
 });
 
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 200,
+  message: { error: 'Rate limit exceeded' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use('/api', globalLimiter);
+
 // ========== HELPERS ==========
 function sanitizeUsername(username) {
-  // Allow only alphanumeric, underscores, and hyphens
   return username.replace(/[^a-zA-Z0-9_-]/g, '').trim();
 }
 
 function getCurrentDate() {
-  // Use a consistent timezone-aware date (UTC is fine if consistent)
   return new Date().toISOString().split('T')[0];
+}
+
+function generateTokenPair(user) {
+  const accessToken = jwt.sign(
+    { id: user.id, username: user.username, type: 'access' },
+    JWT_SECRET,
+    { expiresIn: ACCESS_TOKEN_EXPIRY }
+  );
+  const refreshToken = jwt.sign(
+    { id: user.id, username: user.username, type: 'refresh', jti: crypto.randomUUID() },
+    JWT_REFRESH_SECRET,
+    { expiresIn: REFRESH_TOKEN_EXPIRY }
+  );
+  return { accessToken, refreshToken };
+}
+
+function setRefreshCookie(res, refreshToken) {
+  res.cookie('refreshToken', refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    path: '/api/auth',
+  });
+}
+
+// Track failed login attempts (in-memory for MVP; use Redis in production)
+const loginAttempts = new Map();
+
+function checkLoginAttempts(identifier) {
+  const attempts = loginAttempts.get(identifier);
+  if (!attempts) return { blocked: false, attempts: 0 };
+
+  if (attempts.count >= MAX_LOGIN_ATTEMPTS) {
+    const timePassed = Date.now() - attempts.lastAttempt;
+    if (timePassed < LOCKOUT_DURATION_MINUTES * 60 * 1000) {
+      return { blocked: true, attempts: attempts.count, retryAfter: Math.ceil((LOCKOUT_DURATION_MINUTES * 60 * 1000 - timePassed) / 60000) };
+    }
+    // Reset after lockout period
+    loginAttempts.delete(identifier);
+    return { blocked: false, attempts: 0 };
+  }
+  return { blocked: false, attempts: attempts.count };
+}
+
+function recordFailedLogin(identifier) {
+  const attempts = loginAttempts.get(identifier) || { count: 0, lastAttempt: 0 };
+  loginAttempts.set(identifier, {
+    count: attempts.count + 1,
+    lastAttempt: Date.now(),
+  });
+}
+
+function clearLoginAttempts(identifier) {
+  loginAttempts.delete(identifier);
 }
 
 // ========== AUTH MIDDLEWARE ==========
@@ -74,7 +164,9 @@ function authenticate(req, res, next) {
   const token = req.headers.authorization?.split(' ')[1];
   if (!token) return res.status(401).json({ error: 'No token provided' });
   try {
-    req.user = jwt.verify(token, JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET);
+    if (decoded.type !== 'access') return res.status(401).json({ error: 'Invalid token type' });
+    req.user = decoded;
     next();
   } catch (err) {
     const message = err.name === 'TokenExpiredError' ? 'Token expired' : 'Invalid token';
@@ -101,7 +193,6 @@ app.post('/api/auth/signup', authLimiter, async (req, res) => {
     return res.status(400).json({ error: 'Missing fields' });
   }
 
-  // Validate email format
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
     return res.status(400).json({ error: 'Invalid email format' });
@@ -112,8 +203,16 @@ app.post('/api/auth/signup', authLimiter, async (req, res) => {
     return res.status(400).json({ error: 'Username must be 3-20 characters (letters, numbers, _, -)' });
   }
 
-  if (password.length < 6) {
-    return res.status(400).json({ error: 'Password must be at least 6 characters' });
+  if (password.length < 8) {
+    return res.status(400).json({ error: 'Password must be at least 8 characters' });
+  }
+
+  // Check password strength
+  const hasUpper = /[A-Z]/.test(password);
+  const hasLower = /[a-z]/.test(password);
+  const hasNumber = /[0-9]/.test(password);
+  if (!hasUpper || !hasLower || !hasNumber) {
+    return res.status(400).json({ error: 'Password must contain uppercase, lowercase, and a number' });
   }
 
   try {
@@ -123,8 +222,9 @@ app.post('/api/auth/signup', authLimiter, async (req, res) => {
       [email.toLowerCase().trim(), cleanUsername, hashedPwd]
     );
     const user = result.rows[0];
-    const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '30d' });
-    res.json({ user, token });
+    const { accessToken, refreshToken } = generateTokenPair(user);
+    setRefreshCookie(res, refreshToken);
+    res.json({ user, token: accessToken });
   } catch (err) {
     if (err.code === '23505') {
       return res.status(400).json({ error: 'Username or email already exists' });
@@ -142,26 +242,70 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
     return res.status(400).json({ error: 'Missing fields' });
   }
 
+  const identifier = username.trim().toLowerCase();
+
+  // Check lockout
+  const lockout = checkLoginAttempts(identifier);
+  if (lockout.blocked) {
+    return res.status(429).json({
+      error: `Account temporarily locked. Try again in ${lockout.retryAfter} minutes.`,
+    });
+  }
+
   try {
     const result = await pool.query(
       'SELECT id, username, email, password_hash, total_points FROM users WHERE username = $1',
       [username.trim()]
     );
     if (result.rows.length === 0) {
+      recordFailedLogin(identifier);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
     const user = result.rows[0];
     const valid = await bcrypt.compare(password, user.password_hash);
     if (!valid) {
+      recordFailedLogin(identifier);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
-    const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '30d' });
+
+    clearLoginAttempts(identifier);
+    const { accessToken, refreshToken } = generateTokenPair(user);
+    setRefreshCookie(res, refreshToken);
     delete user.password_hash;
-    res.json({ user, token });
+    res.json({ user, token: accessToken });
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).json({ error: 'Server error' });
   }
+});
+
+// ========== REFRESH TOKEN ==========
+app.post('/api/auth/refresh', async (req, res) => {
+  const refreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
+  if (!refreshToken) return res.status(401).json({ error: 'No refresh token' });
+
+  try {
+    const decoded = jwt.verify(refreshToken, JWT_REFRESH_SECRET);
+    if (decoded.type !== 'refresh') return res.status(401).json({ error: 'Invalid token type' });
+
+    const user = await pool.query(
+      'SELECT id, username, email, total_points FROM users WHERE id = $1',
+      [decoded.id]
+    );
+    if (user.rows.length === 0) return res.status(401).json({ error: 'User not found' });
+
+    const { accessToken, refreshToken: newRefreshToken } = generateTokenPair(user.rows[0]);
+    setRefreshCookie(res, newRefreshToken);
+    res.json({ token: accessToken, user: user.rows[0] });
+  } catch (err) {
+    res.status(401).json({ error: 'Invalid refresh token' });
+  }
+});
+
+// ========== LOGOUT ==========
+app.post('/api/auth/logout', (req, res) => {
+  res.clearCookie('refreshToken', { path: '/api/auth' });
+  res.json({ success: true });
 });
 
 // ========== GET FEED ==========
@@ -193,7 +337,6 @@ app.post('/api/videos/submit', authenticate, submitLimiter, async (req, res) => 
     return res.status(400).json({ error: 'URL is required' });
   }
 
-  // Validate URL format and length
   let parsedUrl;
   try {
     parsedUrl = new URL(url.trim());
@@ -201,9 +344,15 @@ app.post('/api/videos/submit', authenticate, submitLimiter, async (req, res) => 
     return res.status(400).json({ error: 'Invalid URL format' });
   }
 
-  // Only allow http/https
   if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
     return res.status(400).json({ error: 'Only HTTP/HTTPS URLs are allowed' });
+  }
+
+  // Only allow known video platforms
+  const allowedHosts = ['tiktok.com', 'instagram.com', 'youtube.com', 'youtu.be', 'twitter.com', 'x.com'];
+  const isAllowed = allowedHosts.some(h => parsedUrl.hostname.includes(h));
+  if (!isAllowed) {
+    return res.status(400).json({ error: 'Only TikTok, Instagram, YouTube, or Twitter/X links are allowed' });
   }
 
   if (url.length > 500) {
@@ -211,7 +360,6 @@ app.post('/api/videos/submit', authenticate, submitLimiter, async (req, res) => 
   }
 
   try {
-    // Check 1 post/day limit
     const today = getCurrentDate();
     const check = await pool.query(
       'SELECT id FROM videos WHERE submitted_by = $1 AND DATE(created_at) = $2',
@@ -243,20 +391,10 @@ app.post('/api/engagement/track', authenticate, trackLimiter, async (req, res) =
   const { video_id, action } = req.body;
   const user_id = req.user.id;
 
-  const pointsMap = {
-    'play': 5,
-    '50_watch': 70,
-    'full_watch': 100,
-    'skip': -5,
-  };
+  const pointsMap = { 'play': 5, '50_watch': 70, 'full_watch': 100, 'skip': -5 };
 
-  if (!(action in pointsMap)) {
-    return res.status(400).json({ error: 'Invalid action' });
-  }
-
-  if (!video_id) {
-    return res.status(400).json({ error: 'video_id is required' });
-  }
+  if (!(action in pointsMap)) return res.status(400).json({ error: 'Invalid action' });
+  if (!video_id) return res.status(400).json({ error: 'video_id is required' });
 
   const points = pointsMap[action];
   const client = await pool.connect();
@@ -264,7 +402,6 @@ app.post('/api/engagement/track', authenticate, trackLimiter, async (req, res) =
   try {
     await client.query('BEGIN');
 
-    // Check for duplicate engagement (same user, video, action within 1 hour)
     const recentCheck = await client.query(
       `SELECT id FROM engagements
        WHERE user_id = $1 AND video_id = $2 AND action = $3
@@ -277,7 +414,6 @@ app.post('/api/engagement/track', authenticate, trackLimiter, async (req, res) =
       return res.status(400).json({ error: 'Already tracked this action recently' });
     }
 
-    // Verify video exists
     const videoCheck = await client.query('SELECT id FROM videos WHERE id = $1', [video_id]);
     if (videoCheck.rows.length === 0) {
       await client.query('ROLLBACK');
@@ -294,12 +430,8 @@ app.post('/api/engagement/track', authenticate, trackLimiter, async (req, res) =
       [points, user_id]
     );
 
-    // Increment watch_count for play/full_watch
     if (action === 'play' || action === 'full_watch') {
-      await client.query(
-        'UPDATE videos SET watch_count = watch_count + 1 WHERE id = $1',
-        [video_id]
-      );
+      await client.query('UPDATE videos SET watch_count = watch_count + 1 WHERE id = $1', [video_id]);
     }
 
     await client.query('COMMIT');
@@ -317,12 +449,9 @@ app.post('/api/engagement/track', authenticate, trackLimiter, async (req, res) =
 app.get('/api/leaderboard', async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT
-        ROW_NUMBER() OVER (ORDER BY total_points DESC) as rank,
+      `SELECT ROW_NUMBER() OVER (ORDER BY total_points DESC) as rank,
         username, total_points, created_at
-       FROM users
-       ORDER BY total_points DESC
-       LIMIT 100`
+       FROM users ORDER BY total_points DESC LIMIT 100`
     );
     res.json({ leaderboard: result.rows });
   } catch (err) {
@@ -338,9 +467,7 @@ app.get('/api/users/:user_id', async (req, res) => {
       'SELECT id, username, total_points, created_at FROM users WHERE id = $1',
       [req.params.user_id]
     );
-    if (user.rows.length === 0) {
-      return res.status(404).json({ error: 'User not found' });
-    }
+    if (user.rows.length === 0) return res.status(404).json({ error: 'User not found' });
     const rank = await pool.query(
       'SELECT COUNT(*) as rank FROM users WHERE total_points > $1',
       [user.rows[0].total_points]
@@ -349,11 +476,7 @@ app.get('/api/users/:user_id', async (req, res) => {
       'SELECT id, url, watch_count, created_at FROM videos WHERE submitted_by = $1 ORDER BY created_at DESC',
       [req.params.user_id]
     );
-    res.json({
-      user: user.rows[0],
-      rank: parseInt(rank.rows[0].rank, 10) + 1,
-      videos: videos.rows,
-    });
+    res.json({ user: user.rows[0], rank: parseInt(rank.rows[0].rank, 10) + 1, videos: videos.rows });
   } catch (err) {
     console.error('User profile error:', err);
     res.status(500).json({ error: 'Server error' });
@@ -367,9 +490,7 @@ app.get('/api/me', authenticate, async (req, res) => {
       'SELECT id, username, email, total_points, created_at FROM users WHERE id = $1',
       [req.user.id]
     );
-    if (user.rows.length === 0) {
-      return res.status(404).json({ error: 'User not found' });
-    }
+    if (user.rows.length === 0) return res.status(404).json({ error: 'User not found' });
     const rank = await pool.query(
       'SELECT COUNT(*) as rank FROM users WHERE total_points > $1',
       [user.rows[0].total_points]
@@ -403,18 +524,9 @@ async function shutdown(signal) {
     console.log('Database pool closed.');
     process.exit(0);
   });
-
-  // Force shutdown after 10s
-  setTimeout(() => {
-    console.error('Forced shutdown after timeout');
-    process.exit(1);
-  }, 10000);
+  setTimeout(() => { console.error('Forced shutdown'); process.exit(1); }, 10000);
 }
 
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 process.on('SIGINT', () => shutdown('SIGINT'));
-
-// Handle unhandled rejections
-process.on('unhandledRejection', (err) => {
-  console.error('Unhandled rejection:', err);
-});
+process.on('unhandledRejection', (err) => console.error('Unhandled rejection:', err));
