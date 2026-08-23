@@ -239,6 +239,112 @@ const FALLBACK_ITEMS = [
   { image: 'https://picsum.photos/id/1067/300/400', title: 'Growth Story' },
 ];
 
+// ========== Animated Demo Screens ==========
+function AnimatedDemoScreens() {
+  const [screen, setScreen] = useState(0);
+  const screens = [
+    // Screen 0: Feed
+    (
+      <div key="feed" style={{ padding: '1rem', animation: 'fadeIn 0.4s ease' }}>
+        <div style={{ fontSize: '0.9rem', fontWeight: 800, marginBottom: '1rem', fontFamily: "'Playfair Display', serif" }}>Feed</div>
+        {[1, 2, 3].map(i => (
+          <div key={i} className="neu-card" style={{ padding: '0.75rem', marginBottom: '0.5rem', animation: `slideUp 0.3s ease ${i * 0.1}s both` }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+              <div style={{ width: '24px', height: '24px', borderRadius: '2px', background: `hsl(${i * 60}, 50%, 30%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem' }}>
+                {['♪', '◎', '▶'][i - 1]}
+              </div>
+              <div>
+                <div style={{ fontSize: '0.7rem', fontWeight: 700 }}>business_{i}</div>
+                <div style={{ fontSize: '0.55rem', color: 'var(--text-muted)' }}>{['tiktok', 'reels', 'shorts'][i - 1]}</div>
+              </div>
+            </div>
+            <div className="neu-card-inset" style={{ height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', color: 'var(--accent)' }}>
+              ▶ Watch on {['TikTok', 'Instagram', 'YouTube'][i - 1]}
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.25rem', marginTop: '0.5rem' }}>
+              {['▶ +5', '50% +70', 'Full +100', 'Skip -5'].map((btn, j) => (
+                <div key={j} className="neu-card-inset" style={{ padding: '0.3rem', textAlign: 'center', fontSize: '0.45rem', color: 'var(--text-muted)' }}>{btn}</div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    ),
+    // Screen 1: Watching
+    (
+      <div key="watch" style={{ padding: '1rem', animation: 'fadeIn 0.4s ease' }}>
+        <div style={{ fontSize: '0.9rem', fontWeight: 800, marginBottom: '0.75rem', fontFamily: "'Playfair Display', serif" }}>Watching...</div>
+        <div className="neu-card" style={{ padding: '0.75rem', marginBottom: '0.75rem' }}>
+          <div className="neu-card-inset" style={{ height: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
+            <div style={{ fontSize: '1.5rem' }}>▶</div>
+            <div style={{ position: 'absolute', bottom: 0, left: 0, height: '3px', background: 'var(--accent)', width: '65%', animation: 'progressBar 3s ease-in-out infinite' }} />
+          </div>
+          <div style={{ marginTop: '0.5rem', textAlign: 'center' }}>
+            <div style={{ fontSize: '0.7rem', fontWeight: 700 }}>business_1&apos;s Reel</div>
+            <div style={{ fontSize: '0.55rem', color: 'var(--text-muted)' }}>65% watched...</div>
+          </div>
+        </div>
+        <div className="neu-card" style={{ padding: '0.75rem', animation: 'slideUp 0.3s ease 0.2s both' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Points earned</span>
+            <span style={{ fontFamily: "'Playfair Display', serif", fontSize: '1rem', fontWeight: 900, color: 'var(--success)' }}>+70</span>
+          </div>
+        </div>
+      </div>
+    ),
+    // Screen 2: Leaderboard
+    (
+      <div key="ranks" style={{ padding: '1rem', animation: 'fadeIn 0.4s ease' }}>
+        <div style={{ fontSize: '0.9rem', fontWeight: 800, marginBottom: '1rem', fontFamily: "'Playfair Display', serif" }}>Leaderboard</div>
+        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+          {[
+            { rank: '🥈', name: 'alice', pts: '2,340', mt: '1rem' },
+            { rank: '🥇', name: 'you!', pts: '3,150', mt: 0, glow: true },
+            { rank: '🥉', name: 'bob', pts: '1,890', mt: '1.5rem' },
+          ].map((p, i) => (
+            <div key={i} className="neu-card" style={{ flex: 1, padding: '0.5rem', textAlign: 'center', marginTop: p.mt, border: p.glow ? '1px solid rgba(255,215,0,0.2)' : undefined }}>
+              <div style={{ fontSize: '1rem' }}>{p.rank}</div>
+              <div style={{ fontSize: '0.6rem', fontWeight: 700 }}>{p.name}</div>
+              <div style={{ fontSize: '0.55rem', fontFamily: "'Playfair Display', serif", fontWeight: 900, color: p.glow ? 'var(--gold)' : 'var(--text-secondary)' }}>{p.pts}</div>
+            </div>
+          ))}
+        </div>
+        <div className="neu-card" style={{ padding: '0.75rem', borderLeft: '2px solid var(--gold)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem' }}>
+            <span style={{ fontWeight: 700 }}>You climbed to #1!</span>
+            <span style={{ color: 'var(--success)', fontWeight: 800 }}>🎉</span>
+          </div>
+        </div>
+      </div>
+    ),
+  ];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setScreen(s => (s + 1) % screens.length);
+    }, 3500);
+    return () => clearInterval(interval);
+  }, [screens.length]);
+
+  return (
+    <div style={{ position: 'relative', height: '100%' }}>
+      {screens[screen]}
+      {/* Screen dots */}
+      <div style={{ position: 'absolute', bottom: '1rem', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '0.5rem' }}>
+        {screens.map((_, i) => (
+          <div key={i} style={{
+            width: screen === i ? '16px' : '6px',
+            height: '6px',
+            borderRadius: '3px',
+            background: screen === i ? 'var(--accent)' : 'var(--text-muted)',
+            transition: 'all 0.3s ease',
+          }} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function LandingPage({ onEnter }) {
   const [scrollY, setScrollY] = useState(0);
   const [wallItems, setWallItems] = useState(FALLBACK_ITEMS);
@@ -490,6 +596,39 @@ export default function LandingPage({ onEnter }) {
             ))}
           </div>
         </div>
+
+        {/* ===== ANIMATED DEMO ===== */}
+        <section style={{ padding: '6rem 2rem', maxWidth: '1100px', margin: '0 auto' }}>
+          <ScrollReveal>
+            <h2 style={{ textAlign: 'center', fontSize: 'clamp(2rem, 4vw, 3.5rem)', marginBottom: '1rem' }}>
+              see it in action
+            </h2>
+            <p style={{ textAlign: 'center', color: 'var(--text-muted)', marginBottom: '3rem', fontSize: '1rem', maxWidth: '600px', margin: '0 auto 3rem' }}>
+              Post a video. Watch others. Climb. It&apos;s that simple.
+            </p>
+          </ScrollReveal>
+          {/* Phone mockup with animated screens */}
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <div style={{
+              width: '320px',
+              height: '640px',
+              borderRadius: '36px',
+              border: '3px solid rgba(255,255,255,0.1)',
+              background: 'var(--bg-secondary)',
+              overflow: 'hidden',
+              position: 'relative',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.5), 0 0 40px rgba(91,141,239,0.1)',
+            }}>
+              {/* Status bar */}
+              <div style={{ padding: '0.5rem 1.25rem', display: 'flex', justifyContent: 'space-between', fontSize: '0.65rem', color: 'var(--text-muted)' }}>
+                <span>9:41</span>
+                <span>●●●</span>
+              </div>
+              {/* Animated screens */}
+              <AnimatedDemoScreens />
+            </div>
+          </div>
+        </section>
 
         {/* ===== DOOMSCROLL WALL ===== */}
         <section style={{

@@ -548,6 +548,31 @@ app.get('/api/me', authenticate, async (req, res) => {
   }
 });
 
+// ========== DELETE ACCOUNT (GDPR Art. 17, DPDP §6) ==========
+app.delete('/api/me', authenticate, async (req, res) => {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const userId = req.user.id;
+
+    // Delete in correct order (foreign key constraints)
+    await client.query('DELETE FROM notifications WHERE user_id = $1', [userId]);
+    await client.query('DELETE FROM engagements WHERE user_id = $1', [userId]);
+    await client.query('DELETE FROM videos WHERE submitted_by = $1', [userId]);
+    await client.query('DELETE FROM users WHERE id = $1', [userId]);
+
+    await client.query('COMMIT');
+    console.log(`Account deleted: ${userId}`);
+    res.json({ success: true, message: 'Account and all personal data permanently deleted' });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('Account deletion error:', err);
+    res.status(500).json({ error: 'Failed to delete account' });
+  } finally {
+    client.release();
+  }
+});
+
 // ========== BUSINESS SUBMISSION ==========
 app.put('/api/business/submit', authenticate, async (req, res) => {
   const { business_name, business_website, business_description } = req.body;

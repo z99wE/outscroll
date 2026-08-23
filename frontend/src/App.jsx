@@ -8,6 +8,8 @@ import DriftWall from './DriftWall.jsx';
 import { FAQPage, ContentPolicyPage, PrivacyPolicyPage, TermsPage, LegacyDisclaimerPage } from './LegalPages.jsx';
 import BusinessApprovalPage from './BusinessApprovalPage.jsx';
 import AdminPage from './AdminPage.jsx';
+import CookieConsent from './CookieConsent.jsx';
+import DataRightsPage from './DataRightsPage.jsx';
 
 // ========== Error Boundary ==========
 class ErrorBoundary extends Component {
@@ -141,6 +143,7 @@ function Header({ page, setPage, user, onLogout, unreadCount = 0 }) {
             ...(user ? [
               { id: 'submit', label: 'Post' },
               { id: 'business', label: 'Business' },
+              { id: 'data-rights', label: 'My Data' },
               { id: 'profile', label: 'Profile' },
               { id: 'admin', label: 'Admin' },
             ] : []),
@@ -1225,6 +1228,15 @@ export default function App() {
     setPage('feed');
   }, []);
 
+  // Listen for navigation events from other components (e.g., CookieConsent)
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.detail) setPage(e.detail);
+    };
+    window.addEventListener('outscroll-navigate', handler);
+    return () => window.removeEventListener('outscroll-navigate', handler);
+  }, []);
+
   const handleTrack = useCallback(async (videoId, action) => {
     try {
       const res = await axios.post(`${API}/engagement/track`, {
@@ -1284,6 +1296,7 @@ export default function App() {
   return (
     <ErrorBoundary>
       <SkipLink />
+      <CookieConsent />
       <div style={{ minHeight: '100vh' }}>
         <Header page={page} setPage={setPage} user={user} onLogout={handleLogout} unreadCount={unreadCount} />
 
@@ -1305,6 +1318,7 @@ export default function App() {
           {page === 'terms' && <TermsPage />}
           {page === 'legacy' && <LegacyDisclaimerPage />}
           {page === 'business' && user && <BusinessApprovalPage />}
+          {page === 'data-rights' && <DataRightsPage user={user} onLogout={handleLogout} />}
           {page === 'admin' && <AdminPage />}
         </main>
 
@@ -1330,6 +1344,7 @@ export default function App() {
               { id: 'privacy', label: 'Privacy Policy' },
               { id: 'terms', label: 'Terms' },
               { id: 'legacy', label: 'Disclaimer' },
+              { id: 'data-rights', label: 'My Data' },
             ].map(link => (
               <button
                 key={link.id}
