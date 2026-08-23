@@ -60,9 +60,6 @@ function parseVideoUrl(url) {
       }
       return { platform: 'youtube', embedUrl: videoId ? `https://www.youtube.com/embed/${videoId}` : null, icon: '▶' };
     }
-    if (u.hostname.includes('twitter.com') || u.hostname.includes('x.com')) {
-      return { platform: 'twitter', embedUrl: null, icon: '𝕏' };
-    }
     return { platform: 'unknown', embedUrl: null, icon: '🔗' };
   } catch {
     return { platform: 'unknown', embedUrl: null, icon: '🔗' };
@@ -96,7 +93,7 @@ function SkipLink() {
 }
 
 // ========== Header ==========
-function Header({ page, setPage, user, onLogout }) {
+function Header({ page, setPage, user, onLogout, unreadCount = 0 }) {
   const navRef = useRef(null);
 
   return (
@@ -149,14 +146,43 @@ function Header({ page, setPage, user, onLogout }) {
             </button>
           ))}
           {user && (
-            <button
-              onClick={onLogout}
-              className="nav-item"
-              style={{ background: 'none', border: 'none' }}
-              aria-label="Log out"
-            >
-              Out
-            </button>
+            <>
+              <button
+                onClick={() => setPage('notifications')}
+                className="nav-item"
+                style={{ background: 'none', border: 'none', position: 'relative' }}
+                aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}
+              >
+                🔔
+                {unreadCount > 0 && (
+                  <span style={{
+                    position: 'absolute',
+                    top: '2px',
+                    right: '2px',
+                    background: 'var(--danger)',
+                    color: 'white',
+                    fontSize: '0.6rem',
+                    fontWeight: 800,
+                    width: '16px',
+                    height: '16px',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={onLogout}
+                className="nav-item"
+                style={{ background: 'none', border: 'none' }}
+                aria-label="Log out"
+              >
+                Out
+              </button>
+            </>
           )}
         </nav>
       </div>
@@ -880,7 +906,7 @@ function SubmitPage({ user }) {
             )}
           </div>
           <div id="submit-url-hint" style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-            {['TikTok', 'Instagram', 'YouTube', 'Twitter/X'].map(p => (
+            {['TikTok', 'Reels', 'Shorts'].map(p => (
               <span key={p} style={{
                 fontSize: '0.65rem',
                 padding: '0.25rem 0.5rem',
@@ -1015,12 +1041,91 @@ function ProfilePage({ user }) {
   );
 }
 
+// ========== NotificationsPage ==========
+function NotificationsPage({ onMarkRead }) {
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    axios.get(`${API}/notifications`, {
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    }).then(res => {
+      setNotifications(res.data.notifications);
+      // Mark all as read
+      axios.put(`${API}/notifications/read`, {}, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      }).then(() => onMarkRead());
+    }).catch(() => {}).finally(() => setLoading(false));
+  }, [onMarkRead]);
+
+  if (loading) {
+    return (
+      <div>
+        <h2 style={{ marginBottom: '1.5rem', fontSize: '1.5rem' }}>Notifications</h2>
+        {[1, 2, 3].map(i => (
+          <div key={i} className="loading-pulse neu-card" style={{ height: '60px', marginBottom: '0.75rem' }} />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <h2 style={{ marginBottom: '1.5rem', fontSize: '1.5rem' }}>Notifications</h2>
+      {notifications.length === 0 ? (
+        <div className="neu-card-inset" style={{ padding: '3rem', textAlign: 'center' }}>
+          <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>🔔</div>
+          <p style={{ color: 'var(--text-muted)' }}>No notifications yet. Post a video and watch the engagement roll in!</p>
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gap: '0.5rem' }}>
+          {notifications.map(notif => (
+            <div key={notif.id} className="neu-card" style={{
+              padding: '1rem 1.25rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '1rem',
+              opacity: notif.read ? 0.6 : 1,
+            }}>
+              <div style={{
+                width: '36px', height: '36px', borderRadius: '50%',
+                background: notif.points > 0 ? 'rgba(74,222,128,0.1)' : 'rgba(239,68,68,0.1)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '0.9rem', flexShrink: 0,
+              }}>
+                {notif.points > 0 ? '▶' : '⏭'}
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '0.9rem', fontWeight: 500 }}>{notif.message}</div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                  {new Date(notif.created_at).toLocaleString()}
+                </div>
+              </div>
+              {notif.points != null && (
+                <div style={{
+                  fontFamily: "'Playfair Display', serif",
+                  fontWeight: 800,
+                  fontSize: '1rem',
+                  color: notif.points > 0 ? 'var(--success)' : 'var(--danger)',
+                }}>
+                  {notif.points > 0 ? '+' : ''}{notif.points}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ========== Main App ==========
 export default function App() {
   const [page, setPage] = useState('feed');
   const [user, setUser] = useState(null);
   const [authChecked, setAuthChecked] = useState(false);
   const [showLanding, setShowLanding] = useState(true);
+  const [unreadCount, setUnreadCount] = useState(0);
   const mainRef = useRef(null);
 
   useEffect(() => {
@@ -1064,6 +1169,21 @@ export default function App() {
     }
   }, []);
 
+  // Poll for unread notifications every 30s
+  useEffect(() => {
+    if (!user) return;
+    const poll = () => {
+      axios.get(`${API}/notifications`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      }).then(res => {
+        setUnreadCount(res.data.unread_count || 0);
+      }).catch(() => {});
+    };
+    poll();
+    const interval = setInterval(poll, 30000);
+    return () => clearInterval(interval);
+  }, [user]);
+
   // Focus management: move focus to main content on page change
   useEffect(() => {
     if (mainRef.current) {
@@ -1094,7 +1214,7 @@ export default function App() {
     <ErrorBoundary>
       <SkipLink />
       <div style={{ minHeight: '100vh' }}>
-        <Header page={page} setPage={setPage} user={user} onLogout={handleLogout} />
+        <Header page={page} setPage={setPage} user={user} onLogout={handleLogout} unreadCount={unreadCount} />
 
         <main
           id="main-content"
@@ -1107,6 +1227,7 @@ export default function App() {
           {page === 'leaderboard' && <LeaderboardPage />}
           {page === 'submit' && user && <SubmitPage user={user} />}
           {page === 'profile' && (user ? <ProfilePage user={user} /> : <AuthPage onLogin={handleLogin} />)}
+          {page === 'notifications' && user && <NotificationsPage onMarkRead={() => setUnreadCount(0)} />}
         </main>
 
         <footer

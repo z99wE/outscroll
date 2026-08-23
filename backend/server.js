@@ -348,11 +348,24 @@ app.post('/api/videos/submit', authenticate, submitLimiter, async (req, res) => 
     return res.status(400).json({ error: 'Only HTTP/HTTPS URLs are allowed' });
   }
 
-  // Only allow known video platforms
-  const allowedHosts = ['tiktok.com', 'instagram.com', 'youtube.com', 'youtu.be', 'twitter.com', 'x.com'];
+  // Only allow vertical video platforms (Reels, Shorts, TikTok)
+  const allowedHosts = ['tiktok.com', 'instagram.com', 'youtube.com', 'youtu.be'];
   const isAllowed = allowedHosts.some(h => parsedUrl.hostname.includes(h));
   if (!isAllowed) {
-    return res.status(400).json({ error: 'Only TikTok, Instagram, YouTube, or Twitter/X links are allowed' });
+    return res.status(400).json({ error: 'Only TikTok, Instagram Reels, or YouTube Shorts links are allowed' });
+  }
+
+  // Validate it's a vertical/short-form video URL pattern
+  const isReel = parsedUrl.hostname.includes('instagram.com') && (parsedUrl.pathname.includes('/reel/') || parsedUrl.pathname.includes('/p/'));
+  const isShort = parsedUrl.hostname.includes('youtube.com') && (parsedUrl.pathname.includes('/shorts/') || parsedUrl.searchParams.has('v'));
+  const isYTShort = parsedUrl.hostname.includes('youtu.be');
+  const isTikTok = parsedUrl.hostname.includes('tiktok.com');
+  const isInstagram = parsedUrl.hostname.includes('instagram.com');
+  const isYouTube = parsedUrl.hostname.includes('youtube.com');
+
+  // Accept all valid URLs from allowed platforms (Reels, Shorts, TikTok)
+  if (!isTikTok && !isInstagram && !isYouTube) {
+    return res.status(400).json({ error: 'Only TikTok, Instagram Reels, or YouTube Shorts links are allowed' });
   }
 
   if (url.length > 500) {
@@ -434,6 +447,18 @@ app.post('/api/engagement/track', authenticate, trackLimiter, async (req, res) =
       await client.query('UPDATE videos SET watch_count = watch_count + 1 WHERE id = $1', [video_id]);
     }
 
+    // Create notification for video owner (not self)
+    const videoOwner = await client.query('SELECT submitted_by FROM videos WHERE id = $1', [video_id]);
+    if (videoOwner.rows.length > 0 && videoOwner.rows[0].submitted_by !== user_id) {
+      const watcherName = await client.query('SELECT username FROM users WHERE id = $1', [user_id]);
+      const actionLabels = { 'play': 'started watching', '50_watch': 'watched 50% of', 'full_watch': 'fully watched', 'skip': 'skipped' };
+      const notifMsg = `${watcherName.rows[0]?.username || 'Someone'} ${actionLabels[action] || action} your video`;
+      await client.query(
+        'INSERT INTO notifications (user_id, type, message, video_id, from_username, points) VALUES ($1, $2, $3, $4, $5, $6)',
+        [videoOwner.rows[0].submitted_by, 'engagement', notifMsg, video_id, watcherName.rows[0]?.username, points]
+      );
+    }
+
     await client.query('COMMIT');
     res.json({ success: true, points_awarded: points });
   } catch (err) {
@@ -507,6 +532,35 @@ app.get('/api/me', authenticate, async (req, res) => {
     });
   } catch (err) {
     console.error('My profile error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// ========== NOTIFICATIONS ==========
+app.get('/api/notifications', authenticate, async (req, res) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit, 10) || 20, 50);
+    const result = await pool.query(
+      'SELECT id, type, message, video_id, from_username, points, read, created_at FROM notifications WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2',
+      [req.user.id, limit]
+    );
+    const unread = await pool.query(
+      'SELECT COUNT(*) as count FROM notifications WHERE user_id = $1 AND read = FALSE',
+      [req.user.id]
+    );
+    res.json({ notifications: result.rows, unread_count: parseInt(unread.rows[0].count, 10) });
+  } catch (err) {
+    console.error('Notifications error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.put('/api/notifications/read', authenticate, async (req, res) => {
+  try {
+    await pool.query('UPDATE notifications SET read = TRUE WHERE user_id = $1 AND read = FALSE', [req.user.id]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Mark notifications read error:', err);
     res.status(500).json({ error: 'Server error' });
   }
 });

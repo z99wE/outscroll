@@ -28,7 +28,20 @@ CREATE TABLE engagements (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
+CREATE TABLE notifications (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id),
+  type VARCHAR(50) NOT NULL,
+  message TEXT NOT NULL,
+  video_id UUID REFERENCES videos(id),
+  from_username VARCHAR(50),
+  points INTEGER,
+  read BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
 CREATE INDEX idx_videos_created ON videos(created_at DESC);
 CREATE INDEX idx_users_points ON users(total_points DESC);
 CREATE INDEX idx_engagements_user ON engagements(user_id);
 CREATE INDEX idx_engagements_video ON engagements(video_id);
+CREATE INDEX idx_notifications_user ON notifications(user_id, read, created_at DESC);

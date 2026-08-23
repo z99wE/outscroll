@@ -418,21 +418,28 @@ export default function LandingPage({ onEnter }) {
               {
                 step: '01',
                 title: 'Post a Link',
-                desc: "Paste one TikTok, Instagram, or YouTube link per day. That's it.",
+                desc: "Paste one TikTok, Instagram Reel, or YouTube Short link per day. That's it.",
                 icon: '🔗',
                 color: 'var(--accent)',
               },
               {
                 step: '02',
                 title: 'Watch Others',
-                desc: "Watch other creators' content. Earn points for every second you watch.",
+                desc: "Watch other creators' short-form content. Every view counts.",
                 icon: '▶',
                 color: 'var(--success)',
               },
               {
                 step: '03',
+                title: 'Earn Points',
+                desc: 'Get +5 for playing, +70 for 50% watch, +100 for full watch. Skip and you lose 5.',
+                icon: '⚡',
+                color: 'var(--accent)',
+              },
+              {
+                step: '04',
                 title: 'Climb the Ladder',
-                desc: 'Your engagement score ranks you. #1 is the person who watches the most.',
+                desc: 'Your engagement score ranks you. #1 is the person who watches the most content.',
                 icon: '🏆',
                 color: 'var(--gold)',
               },
@@ -613,8 +620,7 @@ export default function LandingPage({ onEnter }) {
               <tbody>
                 {[
                   { feature: 'Payment', outscroll: 'Free', other: 'Pay to rank' },
-                  { feature: 'Leaderboard', outscroll: 'Engagement-based', other: 'Follower count' },
-                  { feature: 'Content', outscroll: 'Any social link', other: 'Limited' },
+                  { feature: 'Leaderboard', outscroll: 'Engagement-based', other: 'Follower count' },                   { feature: 'Content', outscroll: 'Reels, Shorts, TikTok', other: 'Limited' },
                   { feature: 'Creator incentive', outscroll: 'Traffic + discovery', other: 'Direct ranking' },
                 ].map((row, i) => (
                   <ScrollReveal key={row.feature} delay={i * 0.1}>
