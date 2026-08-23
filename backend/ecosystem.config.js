@@ -10,6 +10,7 @@ module.exports = {
       PORT: 3456,
       FRONTEND_URL: 'http://localhost:5173',
       NODE_ENV: 'development',
+      ADMIN_KEY: 'local-admin-key-for-dev-only',
     }
   }]
 };

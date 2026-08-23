@@ -23,6 +23,7 @@ const ACCESS_TOKEN_EXPIRY = '15m';
 const REFRESH_TOKEN_EXPIRY = '7d';
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MINUTES = 15;
+const ADMIN_KEY = process.env.ADMIN_KEY || crypto.randomBytes(32).toString('hex');
 
 const app = express();
 const pool = new Pool({
@@ -585,6 +586,96 @@ app.get('/api/business/status', authenticate, async (req, res) => {
   }
 });
 
+// ========== ADMIN MIDDLEWARE ==========
+function adminOnly(req, res, next) {
+  const key = req.headers['x-admin-key'];
+  if (!key || key !== ADMIN_KEY) {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
+  next();
+}
+
+// ========== ADMIN: List pending businesses ==========
+app.get('/api/admin/pending', adminOnly, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, username, business_name, business_website, business_description, approval_status, rejection_reason, created_at
+       FROM users WHERE approval_status IN ('pending', 'rejected')
+       ORDER BY created_at DESC`
+    );
+    res.json({ users: result.rows });
+  } catch (err) {
+    console.error('Admin pending error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// ========== ADMIN: List all users ==========
+app.get('/api/admin/users', adminOnly, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, username, total_points, business_name, approval_status, created_at
+       FROM users ORDER BY total_points DESC LIMIT 200`
+    );
+    res.json({ users: result.rows });
+  } catch (err) {
+    console.error('Admin users error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// ========== ADMIN: Approve/reject business ==========
+app.put('/api/admin/review', adminOnly, async (req, res) => {
+  const { user_id, action, rejection_reason } = req.body;
+  if (!user_id || !['approve', 'reject'].includes(action)) {
+    return res.status(400).json({ error: 'Missing user_id or invalid action' });
+  }
+  try {
+    const status = action === 'approve' ? 'approved' : 'rejected';
+    const reason = action === 'reject' ? (rejection_reason || 'Does not meet content policy') : null;
+    await pool.query(
+      'UPDATE users SET approval_status = $1, rejection_reason = $2 WHERE id = $3',
+      [status, reason, user_id]
+    );
+    // Create notification for the user
+    const userResult = await pool.query('SELECT username FROM users WHERE id = $1', [user_id]);
+    if (userResult.rows.length > 0) {
+      const message = action === 'approve'
+        ? 'Your business has been approved! You can now post video ads.'
+        : `Your business was not approved. Reason: ${reason}`;
+      await pool.query(
+        'INSERT INTO notifications (user_id, type, message, points) VALUES ($1, $2, $3, 0)',
+        [user_id, 'approval_update', message]
+      );
+    }
+    res.json({ success: true, status });
+  } catch (err) {
+    console.error('Admin review error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// ========== ADMIN: Stats ==========
+app.get('/api/admin/stats', adminOnly, async (req, res) => {
+  try {
+    const [users, videos, pending, engagements] = await Promise.all([
+      pool.query('SELECT COUNT(*) as count FROM users'),
+      pool.query('SELECT COUNT(*) as count FROM videos'),
+      pool.query("SELECT COUNT(*) as count FROM users WHERE approval_status = 'pending'"),
+      pool.query('SELECT COUNT(*) as count FROM engagements'),
+    ]);
+    res.json({
+      total_users: parseInt(users.rows[0].count, 10),
+      total_videos: parseInt(videos.rows[0].count, 10),
+      pending_review: parseInt(pending.rows[0].count, 10),
+      total_engagements: parseInt(engagements.rows[0].count, 10),
+    });
+  } catch (err) {
+    console.error('Admin stats error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // ========== CONTENT POLICY ==========
 app.get('/api/content-policy', (req, res) => {
   res.json({
@@ -646,6 +737,8 @@ app.put('/api/notifications/read', authenticate, async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
+
+console.log('ADMIN_KEY:', ADMIN_KEY);
 
 // ========== START SERVER ==========
 const server = app.listen(PORT, () => {

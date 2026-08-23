@@ -29,6 +29,13 @@ if [ -z "$JWT_REFRESH_SECRET" ]; then
   export JWT_REFRESH_SECRET=$(openssl rand -base64 32)
 fi
 
+if [ -z "$ADMIN_KEY" ]; then
+  echo "🔑 Generating ADMIN_KEY..."
+  export ADMIN_KEY=$(openssl rand -hex 32)
+  echo "   ADMIN_KEY=$ADMIN_KEY"
+  echo "   ⚠️  Save this key! You need it to access the admin dashboard."
+fi
+
 # Step 1: Deploy backend to Emergent
 echo ""
 echo "📦 Deploying backend to Emergent..."
@@ -44,6 +51,7 @@ emergent env set JWT_SECRET="$JWT_SECRET"
 emergent env set JWT_REFRESH_SECRET="$JWT_REFRESH_SECRET"
 emergent env set FRONTEND_URL="${FRONTEND_URL:-https://outscroll.vercel.app}"
 emergent env set NODE_ENV="production"
+emergent env set ADMIN_KEY="$ADMIN_KEY"
 
 # Step 3: Get backend URL
 echo ""

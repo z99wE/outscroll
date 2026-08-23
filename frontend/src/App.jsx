@@ -7,6 +7,7 @@ const LandingPage = lazy(() => import('./LandingPage.jsx'));
 import DriftWall from './DriftWall.jsx';
 import { FAQPage, ContentPolicyPage, PrivacyPolicyPage, TermsPage, LegacyDisclaimerPage } from './LegalPages.jsx';
 import BusinessApprovalPage from './BusinessApprovalPage.jsx';
+import AdminPage from './AdminPage.jsx';
 
 // ========== Error Boundary ==========
 class ErrorBoundary extends Component {
@@ -141,6 +142,7 @@ function Header({ page, setPage, user, onLogout, unreadCount = 0 }) {
               { id: 'submit', label: 'Post' },
               { id: 'business', label: 'Business' },
               { id: 'profile', label: 'Profile' },
+              { id: 'admin', label: 'Admin' },
             ] : []),
           ].map(item => (
             <button
@@ -565,6 +567,20 @@ function LeaderboardPage() {
     return null;
   };
 
+  const shareRank = useCallback((username, rank, points) => {
+    const text = encodeURIComponent(`🏆 I'm #${rank} on OutScroll with ${points.toLocaleString()} points! 🚀 Climb the ladder by watching business video ads. #OutScroll #Leaderboard`);
+    const url = encodeURIComponent('https://outscroll.com');
+
+    if (navigator.share) {
+      navigator.share({ title: 'My OutScroll Rank', text: decodeURIComponent(text), url: 'https://outscroll.com' });
+    } else {
+      // Fallback: copy to clipboard
+      navigator.clipboard.writeText(`🏆 I'm #${rank} on OutScroll with ${points.toLocaleString()} points! 🚀 Climb the ladder by watching business video ads. https://outscroll.com`).then(() => {
+        alert('Rank copied to clipboard! Share it on social media.');
+      });
+    }
+  }, []);
+
   return (
     <div>
       <h2 style={{ marginBottom: '1.5rem', fontSize: '1.5rem' }}>Leaderboard</h2>
@@ -584,6 +600,9 @@ function LeaderboardPage() {
               {leaderboard[1]?.total_points.toLocaleString()}
             </div>
             <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>points</div>
+            <button onClick={() => shareRank(leaderboard[1]?.username, leaderboard[1]?.rank, leaderboard[1]?.total_points)} style={{ marginTop: '0.75rem', background: 'none', border: '1px solid rgba(255,255,255,0.1)', padding: '0.35rem 0.75rem', borderRadius: '2px', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.65rem', fontWeight: 600 }} aria-label="Share 2nd place rank">
+              📤 Share
+            </button>
           </div>
           {/* 1st place */}
           <div className="neu-card glow-gold" role="listitem" style={{ padding: '2rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', border: '1px solid rgba(255,215,0,0.15)' }}>
@@ -593,6 +612,9 @@ function LeaderboardPage() {
               {leaderboard[0]?.total_points.toLocaleString()}
             </div>
             <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>points · #1</div>
+            <button onClick={() => shareRank(leaderboard[0]?.username, leaderboard[0]?.rank, leaderboard[0]?.total_points)} style={{ marginTop: '0.75rem', background: 'none', border: '1px solid rgba(255,215,0,0.2)', padding: '0.35rem 0.75rem', borderRadius: '2px', color: 'var(--gold)', cursor: 'pointer', fontSize: '0.65rem', fontWeight: 600 }} aria-label="Share 1st place rank">
+              📤 Share
+            </button>
           </div>
           {/* 3rd place */}
           <div className="neu-card" role="listitem" style={{ padding: '1.5rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '3rem' }}>
@@ -602,6 +624,9 @@ function LeaderboardPage() {
               {leaderboard[2]?.total_points.toLocaleString()}
             </div>
             <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>points</div>
+            <button onClick={() => shareRank(leaderboard[2]?.username, leaderboard[2]?.rank, leaderboard[2]?.total_points)} style={{ marginTop: '0.75rem', background: 'none', border: '1px solid rgba(255,255,255,0.1)', padding: '0.35rem 0.75rem', borderRadius: '2px', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.65rem', fontWeight: 600 }} aria-label="Share 3rd place rank">
+              📤 Share
+            </button>
           </div>
         </div>
       )}
@@ -1258,6 +1283,7 @@ export default function App() {
           {page === 'terms' && <TermsPage />}
           {page === 'legacy' && <LegacyDisclaimerPage />}
           {page === 'business' && user && <BusinessApprovalPage />}
+          {page === 'admin' && <AdminPage />}
         </main>
 
         <footer

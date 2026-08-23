@@ -1,6 +1,7 @@
 import { useRef, useMemo, useState, useEffect, useCallback } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
+import axios from 'axios';
 import DriftWall from './DriftWall.jsx';
 
 // ========== 3D Particle Field ==========
@@ -207,8 +208,59 @@ function AnimatedCounter({ target, duration = 2000, suffix = '' }) {
 }
 
 // ========== Main Landing Page ==========
+function getVideoThumbnail(url) {
+  if (!url) return null;
+  try {
+    const u = new URL(url);
+    // YouTube thumbnails are publicly accessible
+    if (u.hostname.includes('youtube.com') || u.hostname.includes('youtu.be')) {
+      let videoId;
+      if (u.hostname.includes('youtu.be')) {
+        videoId = u.pathname.slice(1);
+      } else {
+        videoId = u.searchParams.get('v');
+      }
+      if (videoId) return `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+    }
+  } catch {}
+  return null;
+}
+
+const FALLBACK_ITEMS = [
+  { image: 'https://picsum.photos/id/1015/300/400', title: 'Startup Ad' },
+  { image: 'https://picsum.photos/id/1025/300/400', title: 'Product Demo' },
+  { image: 'https://picsum.photos/id/1039/300/400', title: 'Brand Story' },
+  { image: 'https://picsum.photos/id/1042/300/400', title: 'Behind Scenes' },
+  { image: 'https://picsum.photos/id/1043/300/400', title: 'Service Reel' },
+  { image: 'https://picsum.photos/id/1047/300/400', title: 'Culture Vid' },
+  { image: 'https://picsum.photos/id/1050/300/400', title: 'Testimonial' },
+  { image: 'https://picsum.photos/id/1055/300/400', title: 'Launch Clip' },
+  { image: 'https://picsum.photos/id/1060/300/400', title: 'Ad Campaign' },
+  { image: 'https://picsum.photos/id/1067/300/400', title: 'Growth Story' },
+];
+
 export default function LandingPage({ onEnter }) {
   const [scrollY, setScrollY] = useState(0);
+  const [wallItems, setWallItems] = useState(FALLBACK_ITEMS);
+
+  // Fetch real videos for the DriftWall
+  useEffect(() => {
+    axios.get('/api/videos/feed', { params: { limit: 30, offset: 0 } })
+      .then(res => {
+        if (res.data.videos?.length > 0) {
+          const items = res.data.videos.map(v => {
+            const thumb = getVideoThumbnail(v.url);
+            return {
+              image: thumb || `https://picsum.photos/id/${1010 + (Math.abs(v.id?.charCodeAt?.(0) || 0) % 80)}/300/400`,
+              title: `${v.username}'s ad`,
+              href: v.url,
+            };
+          });
+          setWallItems(items);
+        }
+      })
+      .catch(() => {}); // fallback to placeholder items
+  }, []);
 
   const handleScroll = useCallback(() => {
     setScrollY(window.scrollY);
@@ -420,16 +472,7 @@ export default function LandingPage({ onEnter }) {
           </ScrollReveal>
           <div style={{ height: '400px', position: 'relative', zIndex: 2 }}>
             <DriftWall
-              items={[
-                { image: 'https://picsum.photos/id/1015/300/400', title: 'Startup Ad' },
-                { image: 'https://picsum.photos/id/1025/300/400', title: 'Product Demo' },
-                { image: 'https://picsum.photos/id/1039/300/400', title: 'Brand Story' },
-                { image: 'https://picsum.photos/id/1042/300/400', title: 'Behind Scenes' },
-                { image: 'https://picsum.photos/id/1043/300/400', title: 'Service Reel' },
-                { image: 'https://picsum.photos/id/1047/300/400', title: 'Culture Vid' },
-                { image: 'https://picsum.photos/id/1050/300/400', title: 'Testimonial' },
-                { image: 'https://picsum.photos/id/1055/300/400', title: 'Launch Clip' },
-              ]}
+              items={wallItems}
               columns={8}
               tileWidth={100}
               tileHeight={140}

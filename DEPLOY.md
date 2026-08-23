@@ -116,6 +116,28 @@ Or connect the GitHub repo to Vercel dashboard for auto-deploys.
 
 ---
 
+## Admin Dashboard
+
+After deployment, you'll see the `ADMIN_KEY` in the deploy script output.
+
+**To access the admin dashboard:**
+1. Go to your deployed app → Click "Admin" in the nav (or navigate to `/#admin`)
+2. Enter the `ADMIN_KEY`
+3. You can now:
+   - Review pending business submissions
+   - Approve or reject businesses (with reason)
+   - View all users, stats, and platform metrics
+
+**Admin API endpoints (protected by `X-Admin-Key` header):**
+- `GET /api/admin/pending` — List pending business submissions
+- `GET /api/admin/users` — List all users
+- `GET /api/admin/stats` — Platform statistics
+- `PUT /api/admin/review` — Approve/reject a business `{ user_id, action: 'approve'|'reject', rejection_reason? }`
+
+**⚠️ Keep your ADMIN_KEY secret. Anyone with it can approve/reject businesses.**
+
+---
+
 ## Security Checklist (Already Implemented)
 
 - [x] JWT access tokens (15min expiry)
@@ -133,3 +155,5 @@ Or connect the GitHub repo to Vercel dashboard for auto-deploys.
 - [x] Health check endpoint
 - [x] Platform URL whitelist for video submissions
 - [x] Password strength requirements (8+ chars, uppercase, lowercase, number)
+- [x] Admin key authentication (X-Admin-Key header)
+- [x] Admin-only endpoints for business approval
