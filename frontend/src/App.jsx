@@ -10,6 +10,7 @@ import BusinessApprovalPage from './BusinessApprovalPage.jsx';
 import AdminPage from './AdminPage.jsx';
 import CookieConsent from './CookieConsent.jsx';
 import DataRightsPage from './DataRightsPage.jsx';
+import PWAInstallBanner from './PWAInstallBanner.jsx';
 
 // ========== Error Boundary ==========
 class ErrorBoundary extends Component {
@@ -1297,6 +1298,7 @@ export default function App() {
     <ErrorBoundary>
       <SkipLink />
       <CookieConsent />
+      <PWAInstallBanner />
       <div style={{ minHeight: '100vh' }}>
         <Header page={page} setPage={setPage} user={user} onLogout={handleLogout} unreadCount={unreadCount} />
 
