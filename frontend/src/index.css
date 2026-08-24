@@ -1,37 +1,35 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800;900&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=Roboto+Condensed:wght@400;700&family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@700;800;900&display=swap');
 @import "tailwindcss";
 
-/* ========== OutScroll - NeoPop Design System ========== */
+/* ========== OutScroll - Neo-Brutalist Design System ========== */
 
 :root {
-  /* Base colors */
+  /* Brand Colors — from the portfolio reference */
+  --brand-cream: #f3efe0;
+  --brand-red: #e94e33;
+  --brand-blue: #005eb8;
+  --brand-green: #008f4c;
+  --brand-yellow: #fdb913;
+  --brand-black: #1a1a1a;
+
+  /* Legacy tokens for app pages (Feed, Profile, etc.) */
   --bg-primary: #121212;
   --bg-secondary: #1a1a1a;
   --bg-card: #1e1e1e;
   --bg-elevated: #252525;
   --bg-inset: #161616;
-
-  /* Text */
   --text-primary: #f5f5f5;
   --text-secondary: #a0a0a0;
   --text-muted: #6b6b6b;
-
-  /* Accent */
   --accent: #5b8def;
   --accent-hover: #4a7de0;
   --accent-glow: rgba(91, 141, 239, 0.15);
-
-  /* Points colors */
   --gold: #ffd700;
   --silver: #c0c0c0;
   --bronze: #cd7f32;
-
-  /* Success/danger */
   --success: #4ade80;
   --danger: #ef4444;
   --warning: #fbbf24;
-
-  /* Neumorphic shadows */
   --shadow-raised: 4px 4px 8px rgba(0, 0, 0, 0.6), -4px -4px 8px rgba(255, 255, 255, 0.03);
   --shadow-inset: inset 3px 3px 6px rgba(0, 0, 0, 0.5), inset -3px -3px 6px rgba(255, 255, 255, 0.02);
   --shadow-elevated: 6px 6px 12px rgba(0, 0, 0, 0.7), -6px -6px 12px rgba(255, 255, 255, 0.03);
@@ -44,22 +42,66 @@
 }
 
 body {
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
-  font-family: 'Inter', -apple-system, sans-serif;
+  background-color: var(--brand-cream);
+  color: var(--brand-black);
+  font-family: 'Roboto Condensed', 'Inter', -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
 }
 
 /* ========== Typography ========== */
 
-h1, h2, h3, h4 {
-  font-family: 'Playfair Display', Georgia, serif;
-  font-weight: 800;
-  letter-spacing: -0.02em;
+h1, h2, h3, h4, .font-display {
+  font-family: 'Anton', 'Playfair Display', Georgia, serif;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
 }
 
-/* ========== Neumorphic Components ========== */
+.font-secondary {
+  font-family: 'Roboto Condensed', 'Inter', sans-serif;
+}
+
+/* ========== Vertical Text ========== */
+
+.vertical-text {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+
+/* ========== Jagged Right Edge ========== */
+
+.jagged-right-edge {
+  position: relative;
+}
+.jagged-right-edge::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: -10px;
+  width: 10px;
+  height: 100%;
+  background-size: 20px 20px;
+  background-image: linear-gradient(135deg, #008f4c 50%, transparent 50%),
+                    linear-gradient(45deg, #008f4c 50%, transparent 50%);
+  background-repeat: repeat-y;
+  z-index: 20;
+}
+
+/* ========== Menu-Style Layout ========== */
+
+.menu-item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.menu-dots {
+  flex: 1;
+  border-bottom: 2px dotted rgba(0,0,0,0.2);
+  margin: 0 10px;
+}
+
+/* ========== Neumorphic Components (App Pages) ========== */
 
 .neu-card {
   background: var(--bg-card);
@@ -212,7 +254,7 @@ h1, h2, h3, h4 {
 .video-embed {
   position: relative;
   width: 100%;
-  padding-bottom: 56.25%; /* 16:9 */
+  padding-bottom: 56.25%;
   overflow: hidden;
   background: var(--bg-inset);
   box-shadow: var(--shadow-inset);
@@ -249,8 +291,8 @@ h1, h2, h3, h4 {
 /* ========== Points Display ========== */
 
 .points-display {
-  font-family: 'Playfair Display', serif;
-  font-weight: 900;
+  font-family: 'Anton', 'Playfair Display', serif;
+  font-weight: 400;
   font-size: 2rem;
   background: linear-gradient(135deg, var(--accent), var(--success));
   -webkit-background-clip: text;
@@ -302,10 +344,10 @@ h1, h2, h3, h4 {
 /* ========== Logo ========== */
 
 .logo {
-  font-family: 'Playfair Display', serif;
-  font-weight: 900;
+  font-family: 'Anton', 'Playfair Display', serif;
+  font-weight: 400;
   font-size: 1.75rem;
-  letter-spacing: -0.03em;
+  letter-spacing: 0.02em;
   color: var(--text-primary);
 }
 
@@ -324,7 +366,14 @@ h1, h2, h3, h4 {
   .animate-in,
   .loading-pulse,
   .leaderboard-table tbody tr,
-  .neu-btn {
+  .neu-btn,
+  .reveal-on-scroll,
+  .header-animate-in,
+  .logo-animate-in,
+  .animate-spin-slow,
+  .animate-bounce-slow,
+  .animate-marquee,
+  .animate-pulse {
     animation: none !important;
     transition: none !important;
   }
@@ -411,6 +460,11 @@ h1, h2, h3, h4 {
   animation: fadeIn 0.3s ease forwards;
 }
 
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 /* ========== Loading ========== */
 
 .loading-pulse {
@@ -443,4 +497,54 @@ h1, h2, h3, h4 {
   0% { width: 0%; }
   50% { width: 65%; }
   100% { width: 100%; }
+}
+
+/* ========== Header/Logo Animations (Neo-Brutalist) ========== */
+
+.header-animate-in {
+  animation: slideDown 0.8s ease-out forwards;
+}
+.logo-animate-in {
+  animation: popIn 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.2s forwards;
+  opacity: 0;
+}
+
+@keyframes slideDown {
+  from { transform: translateY(-100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+@keyframes popIn {
+  0% { transform: scale(0.8); opacity: 0; }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* ========== Tailwind Config Extension ========== */
+
+@theme {
+  --color-brand-cream: #f3efe0;
+  --color-brand-red: #e94e33;
+  --color-brand-blue: #005eb8;
+  --color-brand-green: #008f4c;
+  --color-brand-yellow: #fdb913;
+  --color-brand-black: #1a1a1a;
+
+  --font-display: 'Anton', sans-serif;
+  --font-secondary: 'Roboto Condensed', sans-serif;
+
+  --animate-spin-slow: spin-slow 10s linear infinite;
+  --animate-bounce-slow: bounce-gentle 2s ease-in-out infinite;
+  --animate-marquee: marquee 25s linear infinite;
+
+  @keyframes spin-slow {
+    100% { transform: rotate(360deg); }
+  }
+  @keyframes bounce-gentle {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+  }
+  @keyframes marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
 }

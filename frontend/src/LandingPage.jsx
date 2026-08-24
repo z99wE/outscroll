@@ -1,161 +1,15 @@
-import { useRef, useMemo, useState, useEffect, useCallback } from 'react';
-import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import * as THREE from 'three';
+import { useRef, useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import DriftWall from './DriftWall.jsx';
 
-// ========== 3D Particle Field ==========
-function ParticleField({ count = 2000 }) {
-  const mesh = useRef();
-  const { viewport, mouse } = useThree();
-  const [velocity, setVelocity] = useState({ x: 0, y: 0 });
-  const prevMouse = useRef({ x: 0, y: 0 });
-
-  const particles = useMemo(() => {
-    const positions = new Float32Array(count * 3);
-    const sizes = new Float32Array(count);
-    const speeds = new Float32Array(count);
-    const phases = new Float32Array(count);
-
-    for (let i = 0; i < count; i++) {
-      positions[i * 3] = (Math.random() - 0.5) * 30;
-      positions[i * 3 + 1] = (Math.random() - 0.5) * 30;
-      positions[i * 3 + 2] = (Math.random() - 0.5) * 20;
-      sizes[i] = Math.random() * 0.03 + 0.01;
-      speeds[i] = Math.random() * 0.3 + 0.1;
-      phases[i] = Math.random() * Math.PI * 2;
-    }
-
-    return { positions, sizes, speeds, phases };
-  }, [count]);
-
-  useFrame((state) => {
-    if (!mesh.current) return;
-
-    const time = state.clock.elapsedTime;
-
-    // Mouse velocity for motion blur effect
-    const dx = mouse.x - prevMouse.current.x;
-    const dy = mouse.y - prevMouse.current.y;
-    prevMouse.current = { x: mouse.x, y: mouse.y };
-    setVelocity({ x: dx * 2, y: dy * 2 });
-
-    const positions = mesh.current.geometry.attributes.position.array;
-    const sizes = mesh.current.geometry.attributes.size.array;
-
-    for (let i = 0; i < count; i++) {
-      const i3 = i * 3;
-
-      // Gentle floating motion
-      positions[i3 + 1] += Math.sin(time * particles.speeds[i] + particles.phases[i]) * 0.002;
-      positions[i3] += Math.cos(time * particles.speeds[i] * 0.5 + particles.phases[i]) * 0.001;
-
-      // Parallax effect based on mouse
-      const depth = (positions[i3 + 2] + 10) / 20;
-      positions[i3] += mouse.x * depth * 0.3 - velocity.x * depth * 0.1;
-      positions[i3 + 1] += mouse.y * depth * 0.3 - velocity.y * depth * 0.1;
-
-      // Motion blur effect — increase size when mouse moves fast
-      const speed = Math.sqrt(velocity.x ** 2 + velocity.y ** 2);
-      const blurFactor = 1 + speed * 3;
-      sizes[i] = (particles.sizes[i] || 0.02) * blurFactor;
-
-      // Wrap around
-      if (positions[i3] > 15) positions[i3] = -15;
-      if (positions[i3] < -15) positions[i3] = 15;
-      if (positions[i3 + 1] > 15) positions[i3 + 1] = -15;
-      if (positions[i3 + 1] < -15) positions[i3 + 1] = 15;
-    }
-
-    mesh.current.geometry.attributes.position.needsUpdate = true;
-    mesh.current.geometry.attributes.size.needsUpdate = true;
-
-    // Rotate entire field slowly
-    mesh.current.rotation.z = time * 0.02;
-  });
-
-  return (
-    <points ref={mesh}>
-      <bufferGeometry>
-        <bufferAttribute
-          attach="attributes-position"
-          count={count}
-          array={particles.positions}
-          itemSize={3}
-        />
-        <bufferAttribute
-          attach="attributes-size"
-          count={count}
-          array={particles.sizes}
-          itemSize={1}
-        />
-      </bufferGeometry>
-      <pointsMaterial
-        size={0.04}
-        color="#5b8def"
-        transparent
-        opacity={0.6}
-        sizeAttenuation
-        blending={THREE.AdditiveBlending}
-        depthWrite={false}
-      />
-    </points>
-  );
-}
-
-// ========== Glowing Lines ==========
-function GlowLines() {
-  const group = useRef();
-  const { mouse } = useThree();
-
-  const lines = useMemo(() => {
-    const result = [];
-    for (let i = 0; i < 8; i++) {
-      const points = [];
-      const y = (i - 4) * 2;
-      for (let j = 0; j < 50; j++) {
-        const x = (j - 25) * 0.6;
-        points.push(new THREE.Vector3(x, y, -5 + Math.random() * 2));
-      }
-      result.push(points);
-    }
-    return result;
-  }, []);
-
-  useFrame((state) => {
-    if (group.current) {
-      group.current.rotation.x = mouse.y * 0.1;
-      group.current.rotation.y = mouse.x * 0.1;
-    }
-  });
-
-  return (
-    <group ref={group}>
-      {lines.map((points, i) => (
-        <line key={i}>
-          <bufferGeometry>
-            <bufferAttribute
-              attach="attributes-position"
-              count={points.length}
-              array={new Float32Array(points.flatMap(p => [p.x, p.y, p.z]))}
-              itemSize={3}
-            />
-          </bufferGeometry>
-          <lineBasicMaterial color="#5b8def" transparent opacity={0.08} />
-        </line>
-      ))}
-    </group>
-  );
-}
-
-// ========== Scroll Section with Reveal Animation ==========
+// ========== Scroll Reveal ==========
 function ScrollReveal({ children, delay = 0 }) {
   const ref = useRef(null);
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) setVisible(true); },
+      ([entry]) => { if (entry.isIntersecting) { setVisible(true); observer.unobserve(entry.target); } },
       { threshold: 0.1 }
     );
     if (ref.current) observer.observe(ref.current);
@@ -165,10 +19,12 @@ function ScrollReveal({ children, delay = 0 }) {
   return (
     <div
       ref={ref}
+      className="reveal-on-scroll"
       style={{
         opacity: visible ? 1 : 0,
-        transform: visible ? 'translateY(0)' : 'translateY(40px)',
-        transition: `opacity 0.8s ease ${delay}s, transform 0.8s ease ${delay}s`,
+        transform: visible ? 'translateY(0)' : 'translateY(30px)',
+        transition: `opacity 0.8s ease-out ${delay}s, transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) ${delay}s`,
+        ...(visible ? { transitionDelay: `${delay}s` } : {}),
       }}
     >
       {children}
@@ -207,12 +63,11 @@ function AnimatedCounter({ target, duration = 2000, suffix = '' }) {
   return <span ref={ref}>{count.toLocaleString()}{suffix}</span>;
 }
 
-// ========== Main Landing Page ==========
+// ========== Thumbnail Helper ==========
 function getVideoThumbnail(url) {
   if (!url) return null;
   try {
     const u = new URL(url);
-    // YouTube thumbnails are publicly accessible
     if (u.hostname.includes('youtube.com') || u.hostname.includes('youtu.be')) {
       let videoId;
       if (u.hostname.includes('youtu.be')) {
@@ -242,101 +97,83 @@ const FALLBACK_ITEMS = [
 // ========== Animated Demo Screens ==========
 function AnimatedDemoScreens() {
   const [screen, setScreen] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => setScreen(s => (s + 1) % 3), 3500);
+    return () => clearInterval(interval);
+  }, []);
+
   const screens = [
-    // Screen 0: Feed
-    (
-      <div key="feed" style={{ padding: '1rem', animation: 'fadeIn 0.4s ease' }}>
-        <div style={{ fontSize: '0.9rem', fontWeight: 800, marginBottom: '1rem', fontFamily: "'Playfair Display', serif" }}>Feed</div>
-        {[1, 2, 3].map(i => (
-          <div key={i} className="neu-card" style={{ padding: '0.75rem', marginBottom: '0.5rem', animation: `slideUp 0.3s ease ${i * 0.1}s both` }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-              <div style={{ width: '24px', height: '24px', borderRadius: '2px', background: `hsl(${i * 60}, 50%, 30%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem' }}>
-                {['♪', '◎', '▶'][i - 1]}
-              </div>
-              <div>
-                <div style={{ fontSize: '0.7rem', fontWeight: 700 }}>business_{i}</div>
-                <div style={{ fontSize: '0.55rem', color: 'var(--text-muted)' }}>{['tiktok', 'reels', 'shorts'][i - 1]}</div>
-              </div>
+    <div key="feed" style={{ padding: '1rem', animation: 'fadeSlideIn 0.4s ease' }}>
+      <div className="font-display text-xl mb-3 tracking-tight">Feed</div>
+      {[1, 2, 3].map(i => (
+        <div key={i} className="bg-brand-cream border-2 border-brand-black p-2 mb-2" style={{ animation: `fadeSlideIn 0.3s ease ${i * 0.1}s both` }}>
+          <div className="flex items-center gap-2 mb-1">
+            <div className="w-6 h-6 rounded-full bg-brand-blue flex items-center justify-center text-[8px] text-white font-bold">
+              {['♪', '◎', '▶'][i - 1]}
             </div>
-            <div className="neu-card-inset" style={{ height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', color: 'var(--accent)' }}>
-              ▶ Watch on {['TikTok', 'Instagram', 'YouTube'][i - 1]}
+            <div>
+              <div className="text-[10px] font-bold">{`biz_${i}`}</div>
+              <div className="text-[8px] text-brand-black/50">{['TikTok', 'Reels', 'Shorts'][i - 1]}</div>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.25rem', marginTop: '0.5rem' }}>
-              {['▶ +5', '50% +70', 'Full +100', 'Skip -5'].map((btn, j) => (
-                <div key={j} className="neu-card-inset" style={{ padding: '0.3rem', textAlign: 'center', fontSize: '0.45rem', color: 'var(--text-muted)' }}>{btn}</div>
-              ))}
-            </div>
+          </div>
+          <div className="bg-brand-yellow/20 border border-brand-yellow/30 py-1 text-center text-[8px] font-bold">
+            ▶ Watch
+          </div>
+          <div className="grid grid-cols-4 gap-1 mt-1">
+            {['▶+5', '50%+70', 'Full+100', 'Skip-5'].map((b, j) => (
+              <div key={j} className="bg-brand-black/5 text-center py-0.5 text-[6px] font-bold">{b}</div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>,
+    <div key="watch" style={{ padding: '1rem', animation: 'fadeSlideIn 0.4s ease' }}>
+      <div className="font-display text-xl mb-2 tracking-tight">Watching...</div>
+      <div className="bg-brand-cream border-2 border-brand-black p-2 mb-2">
+        <div className="bg-brand-blue/10 border border-brand-blue/20 h-24 flex items-center justify-center relative overflow-hidden">
+          <span className="text-2xl">▶</span>
+          <div className="absolute bottom-0 left-0 h-1 bg-brand-green" style={{ width: '65%', animation: 'progressBar 3s ease-in-out infinite' }} />
+        </div>
+        <div className="text-center mt-1">
+          <div className="text-[10px] font-bold">business_1&apos;s Reel</div>
+          <div className="text-[8px] text-brand-black/50">65% watched...</div>
+        </div>
+      </div>
+      <div className="bg-brand-green border-2 border-brand-black p-2 flex justify-between items-center" style={{ animation: 'fadeSlideIn 0.3s ease 0.2s both' }}>
+        <span className="text-[10px] font-bold text-white">Points earned</span>
+        <span className="font-display text-lg text-white font-bold">+70</span>
+      </div>
+    </div>,
+    <div key="ranks" style={{ padding: '1rem', animation: 'fadeSlideIn 0.4s ease' }}>
+      <div className="font-display text-xl mb-2 tracking-tight">Leaderboard</div>
+      <div className="flex gap-1 mb-2">
+        {[
+          { rank: '🥈', name: 'alice', pts: '2.3K', mt: '0.5rem' },
+          { rank: '🥇', name: 'you!', pts: '3.1K', mt: 0, glow: true },
+          { rank: '🥉', name: 'bob', pts: '1.8K', mt: '0.75rem' },
+        ].map((p, i) => (
+          <div key={i} className={`flex-1 p-1 text-center border-2 ${p.glow ? 'border-brand-yellow bg-brand-yellow/10' : 'border-brand-black bg-brand-cream'}`} style={{ marginTop: p.mt }}>
+            <div className="text-sm">{p.rank}</div>
+            <div className="text-[9px] font-bold">{p.name}</div>
+            <div className={`text-[8px] font-display font-bold ${p.glow ? 'text-brand-yellow' : 'text-brand-black/60'}`}>{p.pts}</div>
           </div>
         ))}
       </div>
-    ),
-    // Screen 1: Watching
-    (
-      <div key="watch" style={{ padding: '1rem', animation: 'fadeIn 0.4s ease' }}>
-        <div style={{ fontSize: '0.9rem', fontWeight: 800, marginBottom: '0.75rem', fontFamily: "'Playfair Display', serif" }}>Watching...</div>
-        <div className="neu-card" style={{ padding: '0.75rem', marginBottom: '0.75rem' }}>
-          <div className="neu-card-inset" style={{ height: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ fontSize: '1.5rem' }}>▶</div>
-            <div style={{ position: 'absolute', bottom: 0, left: 0, height: '3px', background: 'var(--accent)', width: '65%', animation: 'progressBar 3s ease-in-out infinite' }} />
-          </div>
-          <div style={{ marginTop: '0.5rem', textAlign: 'center' }}>
-            <div style={{ fontSize: '0.7rem', fontWeight: 700 }}>business_1&apos;s Reel</div>
-            <div style={{ fontSize: '0.55rem', color: 'var(--text-muted)' }}>65% watched...</div>
-          </div>
-        </div>
-        <div className="neu-card" style={{ padding: '0.75rem', animation: 'slideUp 0.3s ease 0.2s both' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Points earned</span>
-            <span style={{ fontFamily: "'Playfair Display', serif", fontSize: '1rem', fontWeight: 900, color: 'var(--success)' }}>+70</span>
-          </div>
-        </div>
+      <div className="bg-brand-red border-2 border-brand-black p-2 text-white text-[10px] font-bold flex justify-between">
+        <span>You climbed to #1!</span><span>🎉</span>
       </div>
-    ),
-    // Screen 2: Leaderboard
-    (
-      <div key="ranks" style={{ padding: '1rem', animation: 'fadeIn 0.4s ease' }}>
-        <div style={{ fontSize: '0.9rem', fontWeight: 800, marginBottom: '1rem', fontFamily: "'Playfair Display', serif" }}>Leaderboard</div>
-        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
-          {[
-            { rank: '🥈', name: 'alice', pts: '2,340', mt: '1rem' },
-            { rank: '🥇', name: 'you!', pts: '3,150', mt: 0, glow: true },
-            { rank: '🥉', name: 'bob', pts: '1,890', mt: '1.5rem' },
-          ].map((p, i) => (
-            <div key={i} className="neu-card" style={{ flex: 1, padding: '0.5rem', textAlign: 'center', marginTop: p.mt, border: p.glow ? '1px solid rgba(255,215,0,0.2)' : undefined }}>
-              <div style={{ fontSize: '1rem' }}>{p.rank}</div>
-              <div style={{ fontSize: '0.6rem', fontWeight: 700 }}>{p.name}</div>
-              <div style={{ fontSize: '0.55rem', fontFamily: "'Playfair Display', serif", fontWeight: 900, color: p.glow ? 'var(--gold)' : 'var(--text-secondary)' }}>{p.pts}</div>
-            </div>
-          ))}
-        </div>
-        <div className="neu-card" style={{ padding: '0.75rem', borderLeft: '2px solid var(--gold)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem' }}>
-            <span style={{ fontWeight: 700 }}>You climbed to #1!</span>
-            <span style={{ color: 'var(--success)', fontWeight: 800 }}>🎉</span>
-          </div>
-        </div>
-      </div>
-    ),
+    </div>,
   ];
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setScreen(s => (s + 1) % screens.length);
-    }, 3500);
-    return () => clearInterval(interval);
-  }, [screens.length]);
-
   return (
-    <div style={{ position: 'relative', height: '100%' }}>
+    <div className="relative h-full">
       {screens[screen]}
-      {/* Screen dots */}
-      <div style={{ position: 'absolute', bottom: '1rem', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '0.5rem' }}>
-        {screens.map((_, i) => (
+      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2">
+        {[0, 1, 2].map(i => (
           <div key={i} style={{
-            width: screen === i ? '16px' : '6px',
-            height: '6px',
-            borderRadius: '3px',
-            background: screen === i ? 'var(--accent)' : 'var(--text-muted)',
+            width: screen === i ? '16px' : '6px', height: '6px', borderRadius: '3px',
+            background: screen === i ? 'var(--brand-red)' : 'rgba(0,0,0,0.2)',
             transition: 'all 0.3s ease',
           }} />
         ))}
@@ -345,320 +182,308 @@ function AnimatedDemoScreens() {
   );
 }
 
+// ========== Main Landing Page ==========
 export default function LandingPage({ onEnter }) {
-  const [scrollY, setScrollY] = useState(0);
   const [wallItems, setWallItems] = useState(FALLBACK_ITEMS);
 
-  // Fetch real videos for the DriftWall
   useEffect(() => {
     axios.get('/api/videos/feed', { params: { limit: 30, offset: 0 } })
       .then(res => {
         if (res.data.videos?.length > 0) {
-          const items = res.data.videos.map(v => {
-            const thumb = getVideoThumbnail(v.url);
-            return {
-              image: thumb || `https://picsum.photos/id/${1010 + (Math.abs(v.id?.charCodeAt?.(0) || 0) % 80)}/300/400`,
-              title: `${v.username}'s ad`,
-              href: v.url,
-            };
-          });
-          setWallItems(items);
+          setWallItems(res.data.videos.map(v => ({
+            image: getVideoThumbnail(v.url) || `https://picsum.photos/id/${1010 + (Math.abs(v.id?.charCodeAt?.(0) || 0) % 80)}/300/400`,
+            title: `${v.username}'s ad`,
+            href: v.url,
+          })));
         }
       })
-      .catch(() => {}); // fallback to placeholder items
+      .catch(() => {});
   }, []);
-
-  const handleScroll = useCallback(() => {
-    setScrollY(window.scrollY);
-  }, []);
-
-  useEffect(() => {
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [handleScroll]);
-
-  const heroOpacity = Math.max(0, 1 - scrollY / 600);
-  const heroScale = 1 + scrollY * 0.0003;
 
   return (
-    <div style={{ background: 'var(--bg-primary)', minHeight: '100vh', overflow: 'hidden' }}>
-      {/* 3D Background */}
-      <div style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        zIndex: 0,
-      }}>
-        <Canvas
-          camera={{ position: [0, 0, 8], fov: 60 }}
-          dpr={[1, 2]}
-          gl={{ antialias: true, alpha: true }}
-        >
-          <ParticleField count={2500} />
-          <GlowLines />
-        </Canvas>
+    <div className="bg-brand-cream min-h-screen overflow-x-hidden font-secondary text-brand-black">
+
+      {/* ===== TOP COLOR BAR ===== */}
+      <div className="fixed top-0 left-0 w-full h-2 z-50 flex shadow-sm">
+        <div className="h-full flex-1 bg-brand-blue" />
+        <div className="h-full flex-1 bg-brand-red" />
+        <div className="h-full flex-1 bg-brand-yellow" />
+        <div className="h-full flex-1 bg-brand-green" />
       </div>
 
-      {/* Gradient overlay for depth */}
-      <div style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        background: 'radial-gradient(ellipse at center, transparent 0%, var(--bg-primary) 70%)',
-        zIndex: 1,
-        pointerEvents: 'none',
-      }} />
-
-      {/* Content */}
-      <div style={{ position: 'relative', zIndex: 2 }}>
-
-        {/* ===== HERO ===== */}
-        <section style={{
-          minHeight: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          textAlign: 'center',
-          padding: '2rem',
-          opacity: heroOpacity,
-          transform: `scale(${heroScale})`,
-        }}>
-          {/* Top badge */}
-          <ScrollReveal delay={0}>
-            <div style={{
-              display: 'inline-block',
-              padding: '0.5rem 1.5rem',
-              background: 'rgba(91, 141, 239, 0.1)',
-              border: '1px solid rgba(91, 141, 239, 0.2)',
-              borderRadius: '2px',
-              fontSize: '0.7rem',
-              fontWeight: 700,
-              textTransform: 'uppercase',
-              letterSpacing: '0.15em',
-              color: 'var(--accent)',
-              marginBottom: '2rem',
-            }}>
-              Free · No Payments · Just Engagement
-            </div>
-          </ScrollReveal>
-
-          {/* Main headline */}
-          <ScrollReveal delay={0.15}>
-            <h1 style={{
-              fontFamily: "'Playfair Display', Georgia, serif",
-              fontSize: 'clamp(3rem, 8vw, 7rem)',
-              fontWeight: 900,
-              lineHeight: 0.95,
-              marginBottom: '1.5rem',
-              letterSpacing: '-0.03em',
-            }}>
-              <span style={{ color: 'var(--text-primary)' }}>climb the</span>
-              <br />
-              <span style={{
-                background: 'linear-gradient(135deg, var(--accent) 0%, #a78bfa 50%, var(--success) 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-                filter: 'drop-shadow(0 0 30px rgba(91, 141, 239, 0.3))',
-              }}>
-                ladder
-              </span>
-            </h1>
-          </ScrollReveal>
-
-          {/* Subtitle */}
-          <ScrollReveal delay={0.3}>
-            <p style={{
-              fontSize: 'clamp(1rem, 2vw, 1.3rem)',
-              color: 'var(--text-secondary)',
-              maxWidth: '520px',
-              lineHeight: 1.6,
-              marginBottom: '3rem',
-            }}>
-              Post your business video ads. Watch other entrepreneurs.
-              Earn points. Climb the leaderboard.
-              <br />
-              <span style={{ color: 'var(--text-muted)', fontSize: '0.9em' }}>
-                Free for businesses. No payment. No complexity. Just engagement.
-              </span>
-            </p>
-          </ScrollReveal>
-
-          {/* CTA buttons */}
-          <ScrollReveal delay={0.45}>
-            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-              <button
-                className="neu-btn neu-btn-primary"
-                onClick={onEnter}
-                style={{
-                  padding: '1.1rem 3rem',
-                  fontSize: '1rem',
-                  fontWeight: 800,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.1em',
-                }}
-              >
-                Get Started — It's Free
-              </button>
-              <button
-                className="neu-btn"
-                onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
-                style={{
-                  padding: '1.1rem 2.5rem',
-                  fontSize: '0.85rem',
-                }}
-              >
-                How It Works ↓
-              </button>
-            </div>
-          </ScrollReveal>
-
-          {/* Scroll indicator */}
-          <div style={{
-            position: 'absolute',
-            bottom: '3rem',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            opacity: heroOpacity * 0.5,
-          }}>
-            <div style={{
-              width: '24px',
-              height: '40px',
-              border: '2px solid var(--text-muted)',
-              borderRadius: '12px',
-              position: 'relative',
-            }}>
-              <div style={{
-                width: '4px',
-                height: '8px',
-                background: 'var(--accent)',
-                borderRadius: '2px',
-                position: 'absolute',
-                left: '50%',
-                top: '8px',
-                transform: 'translateX(-50%)',
-                animation: 'scrollPulse 2s ease-in-out infinite',
-              }} />
+      {/* ===== HEADER ===== */}
+      <header className="pt-28 pb-32 relative z-20 overflow-hidden">
+        {/* Background Decorative Elements */}
+        <div className="absolute top-0 left-0 w-full h-full z-0 opacity-10 pointer-events-none">
+          <div className="absolute top-10 left-10 w-32 h-32 border-4 border-brand-red rounded-full flex items-center justify-center animate-spin-slow">
+            <svg viewBox="0 0 100 100" className="w-full h-full overflow-visible">
+              <path id="curve" d="M 25, 50 a 25,25 0 1,1 50,0 a 25,25 0 1,1 -50,0" fill="transparent" />
+              <text className="text-[10px] font-bold fill-brand-red uppercase tracking-widest">
+                <textPath href="#curve">Video Ads • Engagement • Leaderboard •</textPath>
+              </text>
+            </svg>
+          </div>
+          <div className="absolute bottom-10 right-10 transform rotate-12">
+            <div className="w-40 h-10 border-2 border-brand-red flex items-center justify-between px-2">
+              <div className="h-full w-1 bg-brand-red" />
+              <div className="h-full w-2 bg-brand-red" />
+              <div className="h-full w-0.5 bg-brand-red" />
+              <div className="h-full w-4 bg-brand-red" />
+              <div className="h-full w-1 bg-brand-red" />
+              <span className="text-[10px] font-bold text-brand-red rotate-90 scale-75">2026</span>
             </div>
           </div>
-        </section>
+        </div>
 
-        {/* ===== ROLLING MARQUEE ===== */}
-        <div style={{
-          overflow: 'hidden',
-          borderTop: '1px solid rgba(255,255,255,0.04)',
-          borderBottom: '1px solid rgba(255,255,255,0.04)',
-          padding: '1rem 0',
-          background: 'rgba(91, 141, 239, 0.03)',
-        }}>
-          <div style={{
-            display: 'flex',
-            width: 'max-content',
-            animation: 'marquee 20s linear infinite',
-          }}>
-            {Array.from({ length: 6 }).map((_, i) => (
-              <span key={i} style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '2rem',
-                padding: '0 2rem',
-                whiteSpace: 'nowrap',
-                fontFamily: "'Playfair Display', Georgia, serif",
-                fontSize: 'clamp(1.5rem, 3vw, 2.5rem)',
-                fontWeight: 900,
-                letterSpacing: '-0.02em',
-                textTransform: 'uppercase',
-              }}>
-                <span style={{
-                  background: 'linear-gradient(135deg, var(--accent), #a78bfa)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                }}>outscroll</span>
-                <span style={{ color: 'var(--text-muted)', fontSize: '0.5em' }}>●</span>
-                <span style={{ color: 'var(--text-secondary)' }}>your competitor</span>
-                <span style={{ color: 'var(--text-muted)', fontSize: '0.5em' }}>●</span>
-                <span style={{
-                  background: 'linear-gradient(135deg, #a78bfa, var(--success))',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                }}>outscroll</span>
-                <span style={{ color: 'var(--text-muted)', fontSize: '0.5em' }}>●</span>
-                <span style={{ color: 'var(--text-secondary)' }}>your competitor</span>
-                <span style={{ color: 'var(--text-muted)', fontSize: '0.5em' }}>●</span>
+        {/* Top Nav */}
+        <div className="header-animate-in relative z-20 flex justify-between items-start px-8 text-[10px] font-bold tracking-widest text-brand-red uppercase">
+          <div className="leading-tight hover:text-brand-black transition-colors cursor-default border-l-2 border-brand-red pl-2">
+            Available for<br />Businesses
+          </div>
+          <div className="flex gap-8">
+            <a href="#how-it-works" className="hover:text-brand-black hover:scale-110 transition-all inline-block">How It Works</a>
+            <a href="#features" className="hover:text-brand-black hover:scale-110 transition-all inline-block">Features</a>
+            <a href="#pricing" className="hover:text-brand-black hover:scale-110 transition-all inline-block">Pricing</a>
+          </div>
+          <div className="flex gap-2">
+            <span className="cursor-pointer hover:text-brand-black transition-colors">EN</span> / <span className="text-brand-black/50 cursor-pointer hover:text-black transition-colors">HI</span>
+          </div>
+        </div>
+
+        {/* Main Logo Area — Diamond Frame */}
+        <div className="flex justify-center mt-16 mb-24 relative">
+          <div className="logo-animate-in relative w-80 h-40 md:w-[420px] md:h-48 border-2 border-brand-red transform scale-100 hover:scale-105 transition-transform duration-500 cursor-pointer bg-brand-cream z-10 shadow-[10px_10px_0px_rgba(233,78,51,0.2)]">
+            {/* Decorative corners */}
+            <div className="absolute -top-1 -left-1 w-2 h-2 bg-brand-red" />
+            <div className="absolute -top-1 -right-1 w-2 h-2 bg-brand-red" />
+            <div className="absolute -bottom-1 -left-1 w-2 h-2 bg-brand-red" />
+            <div className="absolute -bottom-1 -right-1 w-2 h-2 bg-brand-red" />
+
+            <div className="absolute inset-0 flex items-center justify-center p-4">
+              <div className="w-full h-full relative flex items-center justify-center">
+                <div className="absolute inset-0 border border-brand-red rotate-3 opacity-20" />
+                <div className="absolute inset-0 border border-brand-red -rotate-2 opacity-20" />
+                <div className="relative z-10 text-center flex flex-col items-center">
+                  <span className="text-[10px] uppercase font-bold text-brand-black tracking-[0.5em] mb-2 bg-brand-red text-brand-cream px-2">Free Engagement Leaderboard</span>
+                  <h1 className="font-display text-6xl md:text-7xl text-brand-red tracking-tighter leading-none" style={{ textShadow: '2px 2px 0px rgba(0,0,0,0.1)' }}>
+                    OUTSCROLL
+                  </h1>
+                  <div className="font-display text-xl text-brand-black tracking-widest mt-1">CLIMB THE LADDER</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Social Icons (Right Side) */}
+        <div className="header-animate-in absolute bottom-4 right-8 flex gap-2">
+          <button className="w-6 h-6 bg-brand-red rotate-45 flex items-center justify-center text-brand-cream text-[10px] hover:bg-brand-black transition-colors duration-300 group">
+            <span className="-rotate-45 font-bold group-hover:rotate-0 transition-transform duration-300">▶</span>
+          </button>
+          <button className="w-6 h-6 bg-brand-red rotate-45 flex items-center justify-center text-brand-cream text-[10px] hover:bg-brand-black transition-colors duration-300 group">
+            <span className="-rotate-45 font-bold group-hover:rotate-0 transition-transform duration-300">↗</span>
+          </button>
+        </div>
+      </header>
+
+      <main>
+        {/* ===== SCROLLING MARQUEE ===== */}
+        <div className="bg-brand-red py-3 overflow-hidden border-y-4 border-brand-black relative">
+          <div className="flex w-max animate-marquee">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <span key={i} className="inline-flex items-center gap-6 px-6 whitespace-nowrap font-display text-2xl md:text-3xl text-brand-cream tracking-tight uppercase">
+                OUTSCROLL <span className="text-brand-yellow">●</span> YOUR COMPETITOR <span className="text-brand-yellow">●</span> CLIMB THE LADDER <span className="text-brand-yellow">●</span> FREE <span className="text-brand-yellow">●</span>
               </span>
             ))}
           </div>
         </div>
 
-        {/* ===== ANIMATED DEMO ===== */}
-        <section style={{ padding: '6rem 2rem', maxWidth: '1100px', margin: '0 auto' }}>
+        {/* ===== HOW IT WORKS — Menu Style ===== */}
+        <section id="how-it-works" className="flex flex-col md:flex-row min-h-[500px] relative bg-brand-cream overflow-hidden">
+          {/* Decorative Elements */}
+          <div className="absolute -top-6 left-16 w-12 h-12 bg-brand-green rounded-full flex items-center justify-center z-20 border-4 border-brand-black animate-spin-slow shadow-lg hover:scale-110 transition-transform cursor-pointer">
+            <svg className="w-6 h-6 text-brand-cream" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </div>
+          <div className="absolute -top-6 left-32 w-10 h-10 bg-brand-yellow rounded-full flex items-center justify-center z-20 border-4 border-brand-cream opacity-90 animate-bounce-slow" style={{ animationDelay: '1s' }}>
+            <div className="w-full h-full border border-dashed border-brand-black rounded-full" />
+          </div>
+
+          {/* Green Sidebar */}
           <ScrollReveal>
-            <h2 style={{ textAlign: 'center', fontSize: 'clamp(2rem, 4vw, 3.5rem)', marginBottom: '1rem' }}>
-              see it in action
-            </h2>
-            <p style={{ textAlign: 'center', color: 'var(--text-muted)', marginBottom: '3rem', fontSize: '1rem', maxWidth: '600px', margin: '0 auto 3rem' }}>
-              Post a video. Watch others. Climb. It&apos;s that simple.
-            </p>
+            <div className="w-full md:w-20 bg-brand-green relative flex md:flex-col items-center justify-between py-8 px-4 jagged-right-edge z-10 shrink-0">
+              <h2 className="font-display text-4xl md:text-5xl text-brand-cream md:vertical-text tracking-tight uppercase hover:text-brand-yellow transition-colors cursor-default">Steps</h2>
+              <div className="hidden md:block text-[9px] font-bold text-brand-cream uppercase vertical-text tracking-widest mt-8 animate-pulse">Free to join</div>
+            </div>
           </ScrollReveal>
-          {/* Phone mockup with animated screens */}
-          <div style={{ display: 'flex', justifyContent: 'center' }}>
-            <div style={{
-              width: '320px',
-              height: '640px',
-              borderRadius: '36px',
-              border: '3px solid rgba(255,255,255,0.1)',
-              background: 'var(--bg-secondary)',
-              overflow: 'hidden',
-              position: 'relative',
-              boxShadow: '0 20px 60px rgba(0,0,0,0.5), 0 0 40px rgba(91,141,239,0.1)',
-            }}>
-              {/* Status bar */}
-              <div style={{ padding: '0.5rem 1.25rem', display: 'flex', justifyContent: 'space-between', fontSize: '0.65rem', color: 'var(--text-muted)' }}>
-                <span>9:41</span>
-                <span>●●●</span>
-              </div>
-              {/* Animated screens */}
-              <AnimatedDemoScreens />
+
+          {/* Content Area (Menu Style) */}
+          <div className="flex-1 p-8 md:p-12 relative bg-brand-cream">
+            {/* Background Pattern */}
+            <div className="absolute inset-0 opacity-5 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
+
+            <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+              {/* Column 1: The Flow */}
+              <ScrollReveal delay={0.1}>
+                <div>
+                  <h3 className="font-bold text-xs uppercase tracking-widest text-brand-green mb-4 border-b border-brand-green/20 pb-1">The Flow</h3>
+                  <ul className="space-y-3 text-xs font-bold text-brand-black/80 uppercase">
+                    {[
+                      { label: 'Submit Business', desc: 'Sign up & submit website' },
+                      { label: 'Get Approved', desc: 'We verify you\'re legit' },
+                      { label: 'Post Reels/Shorts', desc: '1 video ad per day' },
+                      { label: 'Watch Others', desc: 'Earn +5 to +100 points' },
+                    ].map((item) => (
+                      <li key={item.label} className="menu-item group hover:text-brand-red transition-colors cursor-pointer">
+                        <span>{item.label}</span>
+                        <span className="menu-dots group-hover:border-brand-red" />
+                        <span className="text-brand-black/40 text-[9px] normal-case tracking-normal">{item.desc}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <h3 className="font-bold text-xs uppercase tracking-widest text-brand-green mb-4 mt-8 border-b border-brand-green/20 pb-1">Points</h3>
+                  <ul className="space-y-3 text-xs font-bold text-brand-black/80 uppercase">
+                    {[
+                      { action: 'Play Video', points: '+5' },
+                      { action: 'Watch 50%', points: '+70' },
+                      { action: 'Full Watch', points: '+100' },
+                      { action: 'Skip Early', points: '-5' },
+                    ].map((item) => (
+                      <li key={item.action} className="menu-item group hover:text-brand-red transition-colors cursor-pointer">
+                        <span>{item.action}</span>
+                        <span className="menu-dots group-hover:border-brand-red" />
+                        <span className={`font-display font-bold ${item.points.startsWith('-') ? 'text-brand-red' : 'text-brand-green'}`}>{item.points}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </ScrollReveal>
+
+              {/* Column 2: Platforms + CTA */}
+              <ScrollReveal delay={0.2}>
+                <div>
+                  <h3 className="font-bold text-xs uppercase tracking-widest text-brand-green mb-4 border-b border-brand-green/20 pb-1">Supported Platforms</h3>
+                  <ul className="space-y-3 text-xs font-bold text-brand-black/80 uppercase">
+                    {[
+                      { platform: 'TikTok', icon: '♪' },
+                      { platform: 'Instagram Reels', icon: '◎' },
+                      { platform: 'YouTube Shorts', icon: '▶' },
+                      { platform: 'Snapchat Spotlight', icon: '👻' },
+                    ].map((item) => (
+                      <li key={item.platform} className="menu-item group hover:text-brand-red transition-colors cursor-pointer">
+                        <span>{item.icon} {item.platform}</span>
+                        <span className="menu-dots group-hover:border-brand-red" />
+                        <span className="text-brand-green font-bold">✓</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <h3 className="font-bold text-xs uppercase tracking-widest text-brand-green mb-4 mt-8 border-b border-brand-green/20 pb-1">Why OutScroll</h3>
+                  <ul className="space-y-3 text-xs font-bold text-brand-black/80 uppercase">
+                    {[
+                      { item: 'Free forever', check: true },
+                      { item: 'Verified businesses only', check: true },
+                      { item: 'Engagement-based ranking', check: true },
+                      { item: 'No ads, no pay-to-rank', check: true },
+                    ].map((item) => (
+                      <li key={item.item} className="menu-item group hover:text-brand-red transition-colors cursor-pointer">
+                        <span>{item.item}</span>
+                        <span className="menu-dots group-hover:border-brand-red" />
+                        <span className="text-brand-green font-bold">{item.check ? '✓' : '—'}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  {/* CTA Box */}
+                  <div className="mt-8 bg-brand-red p-4 text-brand-cream transform -rotate-1 shadow-lg hover:rotate-0 hover:shadow-xl transition-all duration-300 cursor-pointer group">
+                    <p className="font-display text-xl mb-1 group-hover:scale-105 transition-transform origin-left">Ready to climb?</p>
+                    <p className="text-[10px] leading-tight opacity-90 group-hover:opacity-100">Join free. Watch content. Rise to #1 on the leaderboard.</p>
+                  </div>
+                </div>
+              </ScrollReveal>
             </div>
           </div>
+
+          {/* Cheese Wedge Decoration at Bottom */}
+          <div className="absolute bottom-[-30px] left-1/2 transform -translate-x-1/2 z-20 hover:translate-y-[-10px] transition-transform duration-300">
+            <div className="w-16 h-16 bg-brand-yellow rotate-45 border-4 border-brand-black relative overflow-hidden">
+              <div className="absolute top-2 left-2 w-2 h-2 bg-brand-black rounded-full" />
+              <div className="absolute bottom-4 right-2 w-4 h-4 bg-brand-black rounded-full" />
+            </div>
+          </div>
+          {/* Red Half Circle Decoration */}
+          <div className="absolute bottom-[-15px] right-20 w-12 h-6 bg-brand-red rounded-t-full border-t-2 border-r-2 border-l-2 border-brand-black z-20 hover:scale-110 transition-transform origin-bottom" />
+
+          {/* Bottom jagged edge */}
+          <div className="absolute bottom-0 left-0 w-full h-4 bg-brand-cream" style={{ clipPath: 'polygon(0% 100%, 2% 0%, 4% 100%, 6% 0%, 8% 100%, 10% 0%, 12% 100%, 14% 0%, 16% 100%, 18% 0%, 20% 100%, 22% 0%, 24% 100%, 26% 0%, 28% 100%, 30% 0%, 32% 100%, 34% 0%, 36% 100%, 38% 0%, 40% 100%, 42% 0%, 44% 100%, 46% 0%, 48% 100%, 50% 0%, 52% 100%, 54% 0%, 56% 100%, 58% 0%, 60% 100%, 62% 0%, 64% 100%, 66% 0%, 68% 100%, 70% 0%, 72% 100%, 74% 0%, 76% 100%, 78% 0%, 80% 100%, 82% 0%, 84% 100%, 86% 0%, 88% 100%, 90% 0%, 92% 100%, 94% 0%, 96% 100%, 98% 0%, 100% 100%)' }} />
+        </section>
+
+        {/* ===== ANIMATED DEMO — Phone Mockup ===== */}
+        <section className="bg-brand-blue py-20 relative overflow-hidden" id="demo">
+          <div className="flex flex-col md:flex-row max-w-6xl mx-auto px-8 gap-12 items-center">
+            {/* Left: Text */}
+            <div className="flex-1 text-brand-cream">
+              <ScrollReveal>
+                <div className="text-[10px] font-bold uppercase tracking-[0.3em] text-brand-yellow mb-4 border-l-2 border-brand-yellow pl-3">See It In Action</div>
+                <h2 className="font-display text-5xl md:text-6xl tracking-tight leading-none mb-4">
+                  POST.<br />WATCH.<br />CLIMB.
+                </h2>
+                <p className="text-brand-cream/70 text-sm leading-relaxed max-w-sm mb-8">
+                  Post your business video ad. Watch other entrepreneurs' content. Earn points. Climb the leaderboard. It&apos;s that simple.
+                </p>
+              </ScrollReveal>
+              <ScrollReveal delay={0.2}>
+                <button
+                  className="bg-brand-yellow text-brand-black font-display text-lg px-8 py-3 border-2 border-brand-black shadow-[4px_4px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] transition-all duration-200 uppercase tracking-wider"
+                  onClick={onEnter}
+                >
+                  Get Started Free
+                </button>
+              </ScrollReveal>
+            </div>
+
+            {/* Right: Phone Mockup */}
+            <ScrollReveal delay={0.3}>
+              <div className="relative">
+                <div className="w-[280px] h-[560px] rounded-[32px] border-4 border-brand-black bg-brand-cream overflow-hidden shadow-[12px_12px_0px_rgba(0,0,0,0.3)]">
+                  {/* Notch */}
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-5 bg-brand-black rounded-b-xl z-10" />
+                  {/* Status bar */}
+                  <div className="pt-7 px-4 flex justify-between text-[8px] font-bold text-brand-black/40">
+                    <span>9:41</span>
+                    <span>●●●</span>
+                  </div>
+                  {/* Content */}
+                  <AnimatedDemoScreens />
+                </div>
+                {/* Decorative elements */}
+                <div className="absolute -top-4 -right-4 w-12 h-12 bg-brand-red rounded-full border-2 border-brand-black flex items-center justify-center animate-spin-slow">
+                  <span className="text-white font-bold text-xs">★</span>
+                </div>
+                <div className="absolute -bottom-3 -left-3 w-8 h-8 bg-brand-yellow border-2 border-brand-black rotate-45" />
+              </div>
+            </ScrollReveal>
+          </div>
+
+          {/* Jagged bottom edge */}
+          <div className="absolute bottom-0 left-0 w-full h-4 bg-brand-cream" style={{ clipPath: 'polygon(0% 100%, 2% 0%, 4% 100%, 6% 0%, 8% 100%, 10% 0%, 12% 100%, 14% 0%, 16% 100%, 18% 0%, 20% 100%, 22% 0%, 24% 100%, 26% 0%, 28% 100%, 30% 0%, 32% 100%, 34% 0%, 36% 100%, 38% 0%, 40% 100%, 42% 0%, 44% 100%, 46% 0%, 48% 100%, 50% 0%, 52% 100%, 54% 0%, 56% 100%, 58% 0%, 60% 100%, 62% 0%, 64% 100%, 66% 0%, 68% 100%, 70% 0%, 72% 100%, 74% 0%, 76% 100%, 78% 0%, 80% 100%, 82% 0%, 84% 100%, 86% 0%, 88% 100%, 90% 0%, 92% 100%, 94% 0%, 96% 100%, 98% 0%, 100% 100%)' }} />
         </section>
 
         {/* ===== DOOMSCROLL WALL ===== */}
-        <section style={{
-          padding: '4rem 0',
-          position: 'relative',
-          overflow: 'hidden',
-          background: 'linear-gradient(180deg, var(--bg-primary) 0%, #060010 30%, #060010 70%, var(--bg-primary) 100%)',
-        }}>
+        <section className="py-16 relative overflow-hidden bg-brand-cream">
           <ScrollReveal>
-            <h2 style={{
-              textAlign: 'center',
-              fontSize: 'clamp(1.5rem, 3vw, 2.5rem)',
-              marginBottom: '0.5rem',
-              position: 'relative',
-              zIndex: 3,
-            }}>
-              always watching
-            </h2>
-            <p style={{
-              textAlign: 'center',
-              color: 'var(--text-muted)',
-              marginBottom: '1.5rem',
-              fontSize: '0.95rem',
-              position: 'relative',
-              zIndex: 3,
-            }}>
-              Businesses posting. Entrepreneurs engaging. The ladder moves.
-            </p>
+            <div className="text-center mb-6 relative z-3">
+              <h2 className="font-display text-4xl md:text-5xl text-brand-red tracking-tight uppercase" style={{ textShadow: '2px 2px 0px #fdb913' }}>
+                Always Watching
+              </h2>
+              <p className="text-brand-black/60 mt-2 text-sm font-bold uppercase tracking-wider">
+                Businesses posting. Entrepreneurs engaging. The ladder moves.
+              </p>
+            </div>
           </ScrollReveal>
-          <div style={{ height: '400px', position: 'relative', zIndex: 2 }}>
+          <div style={{ height: '380px', position: 'relative', zIndex: 2 }}>
             <DriftWall
               items={wallItems}
               columns={8}
@@ -671,213 +496,190 @@ export default function LandingPage({ onEnter }) {
               parallax={0.7}
               depth={80}
               fade={0.5}
-              overlayColor="#060010"
+              overlayColor="#f3efe0"
               pauseOnHover
             />
           </div>
         </section>
 
-        {/* ===== HOW IT WORKS ===== */}
-        <section id="how-it-works" style={{ padding: '8rem 2rem', maxWidth: '1100px', margin: '0 auto' }}>
+        {/* ===== FEATURE CARDS — Grid ===== */}
+        <section id="features" className="bg-brand-cream pt-8 pb-16 relative">
+          {/* Header */}
           <ScrollReveal>
-            <h2 style={{
-              textAlign: 'center',
-              fontSize: 'clamp(2rem, 4vw, 3.5rem)',
-              marginBottom: '1rem',
-            }}>
-              how it works
-            </h2>
-            <p style={{
-              textAlign: 'center',
-              color: 'var(--text-muted)',
-              marginBottom: '4rem',
-              fontSize: '1.1rem',
-            }}>
-              Four steps. Zero complexity.
-            </p>
+            <div className="text-center mb-8 relative">
+              <h2 className="font-display text-4xl md:text-5xl text-brand-yellow uppercase tracking-tight hover:text-brand-red transition-colors duration-500 cursor-default" style={{ textShadow: '2px 2px 0px #e94e33' }}>
+                What You Get
+              </h2>
+            </div>
           </ScrollReveal>
 
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-            gap: '2rem',
-          }}>
-            {[
-              {
-                step: '01',
-                title: 'Submit Your Business',
-                desc: "Sign up, submit your website for approval. We verify you're a legitimate business.",
-                icon: '🏢',
-                color: 'var(--accent)',
-              },
-              {
-                step: '02',
-                title: 'Post Your Ad',
-                desc: "Once approved, post one TikTok, Reel, or Short per day showcasing your business.",
-                icon: '📱',
-                color: 'var(--success)',
-              },
-              {
-                step: '03',
-                title: 'Watch & Earn',
-                desc: 'Watch other businesses\' content. Earn +5 to +100 points per video. Engagement is everything.',
-                icon: '⚡',
-                color: 'var(--accent)',
-              },
-              {
-                step: '04',
-                title: 'Climb the Ladder',
-                desc: 'Your engagement score ranks you against every business. #1 watches the most content.',
-                icon: '🏆',
-                color: 'var(--gold)',
-              },
-            ].map((item, i) => (
-              <ScrollReveal key={item.step} delay={i * 0.15}>
-                <div className="neu-card" style={{
-                  padding: '2.5rem 2rem',
-                  height: '100%',
-                  position: 'relative',
-                  overflow: 'hidden',
-                }}>
-                  {/* Step number */}
-                  <div style={{
-                    position: 'absolute',
-                    top: '-0.5rem',
-                    right: '1rem',
-                    fontFamily: "'Playfair Display', serif",
-                    fontSize: '5rem',
-                    fontWeight: 900,
-                    color: item.color,
-                    opacity: 0.06,
-                    lineHeight: 1,
-                  }}>
-                    {item.step}
+          {/* Row 1 — 3 cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 w-full max-w-6xl mx-auto">
+            <ScrollReveal delay={0.1}>
+              <div className="group relative bg-brand-green h-64 md:h-72 overflow-hidden border-r border-brand-cream cursor-pointer">
+                <div className="absolute top-4 left-4 w-2 h-2 bg-brand-black rounded-full z-10" />
+                <div className="h-4/5 flex items-center justify-center p-6">
+                  <div className="w-32 h-32 bg-brand-cream border-4 border-brand-black flex flex-col items-center justify-center shadow-xl transform group-hover:scale-110 transition duration-500 rotate-3">
+                    <span className="text-4xl">🏢</span>
+                    <span className="font-display text-xs text-brand-black mt-1">BUSINESS</span>
                   </div>
-
-                  <div style={{
-                    fontSize: '2rem',
-                    marginBottom: '1rem',
-                  }}>
-                    {item.icon}
-                  </div>
-                  <h3 style={{
-                    fontSize: '1.5rem',
-                    marginBottom: '0.75rem',
-                    fontFamily: "'Playfair Display', serif",
-                  }}>
-                    {item.title}
-                  </h3>
-                  <p style={{ color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-                    {item.desc}
-                  </p>
                 </div>
-              </ScrollReveal>
-            ))}
+                <div className="absolute bottom-0 w-full bg-brand-green brightness-90 py-2 px-4 flex justify-between items-center group-hover:bg-brand-black transition-colors duration-300">
+                  <span className="font-display text-brand-cream text-xl">Verified Only</span>
+                  <span className="text-[10px] font-bold text-brand-yellow bg-brand-black px-2 py-0.5 group-hover:bg-brand-yellow group-hover:text-brand-black transition-colors">APPROVAL</span>
+                </div>
+              </div>
+            </ScrollReveal>
+
+            <ScrollReveal delay={0.2}>
+              <div className="group relative bg-[#d6cbb2] h-64 md:h-72 overflow-hidden border-r border-brand-cream cursor-pointer">
+                <div className="absolute top-0 right-8 w-8 h-12 bg-brand-red flex items-end justify-center pb-2 shadow-sm group-hover:h-16 transition-all duration-300">
+                  <div className="w-4 h-4 rounded-full bg-white" />
+                </div>
+                <div className="h-4/5 flex items-center justify-center p-6">
+                  <div className="w-32 h-32 bg-white border-2 border-brand-red flex flex-col items-center justify-center shadow-xl transform group-hover:scale-110 transition duration-500 -rotate-3">
+                    <span className="text-4xl">📱</span>
+                    <span className="font-display text-xs text-brand-red mt-1">REELS</span>
+                  </div>
+                </div>
+                <div className="absolute bottom-0 w-full bg-[#c5b99e] py-2 px-4 flex justify-between items-center group-hover:bg-brand-red transition-colors duration-300">
+                  <span className="font-display text-brand-red text-xl group-hover:text-white">Vertical Video</span>
+                  <span className="text-[10px] font-bold text-white bg-brand-red px-2 py-0.5 group-hover:bg-white group-hover:text-brand-red">SHORTS</span>
+                </div>
+              </div>
+            </ScrollReveal>
+
+            <ScrollReveal delay={0.3}>
+              <div className="group relative bg-brand-blue h-64 md:h-72 overflow-hidden cursor-pointer">
+                <div className="absolute top-4 left-4 w-2 h-12 border-l-2 border-dashed border-white/50" />
+                <div className="h-4/5 flex items-center justify-center p-6">
+                  <div className="w-32 h-32 bg-brand-yellow border-4 border-brand-black flex flex-col items-center justify-center shadow-xl transform group-hover:scale-110 transition duration-500 rotate-2">
+                    <span className="text-4xl">🏆</span>
+                    <span className="font-display text-xs text-brand-black mt-1">#1</span>
+                  </div>
+                </div>
+                <div className="absolute bottom-0 w-full bg-brand-blue brightness-90 py-2 px-4 flex justify-between items-center group-hover:bg-brand-yellow transition-colors duration-300">
+                  <span className="font-display text-brand-yellow text-xl group-hover:text-blue-900">Leaderboard</span>
+                  <span className="text-[10px] font-bold text-blue-900 bg-brand-yellow px-2 py-0.5 group-hover:bg-blue-900 group-hover:text-brand-yellow">RANKS</span>
+                </div>
+              </div>
+            </ScrollReveal>
+          </div>
+
+          {/* Row 2 — 3 cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 w-full max-w-6xl mx-auto">
+            <ScrollReveal delay={0.1}>
+              <div className="group relative bg-brand-blue h-64 md:h-64 overflow-hidden border-r border-t border-brand-cream cursor-pointer">
+                <div className="absolute inset-0 flex items-center justify-center opacity-20 group-hover:opacity-40 transition-opacity">
+                  <span className="font-display text-9xl text-white group-hover:rotate-180 transition-transform duration-700">★</span>
+                </div>
+                <div className="h-full flex items-center justify-center p-6 relative z-10">
+                  <div className="w-24 h-24 bg-brand-red rounded-full border-4 border-brand-black flex items-center justify-center shadow-xl transform group-hover:scale-125 transition duration-500">
+                    <span className="text-white font-display text-2xl">+100</span>
+                  </div>
+                </div>
+                <div className="absolute bottom-4 left-4">
+                  <span className="font-display text-white text-lg">Points</span>
+                </div>
+                <div className="absolute bottom-4 right-4 text-[10px] text-white font-bold opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-2 group-hover:translate-y-0">
+                  Earn per watch
+                </div>
+              </div>
+            </ScrollReveal>
+
+            <ScrollReveal delay={0.2}>
+              <div className="group relative bg-brand-green h-64 md:h-64 overflow-hidden border-r border-t border-brand-cream cursor-pointer">
+                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-[20px] border-l-transparent border-r-[20px] border-r-transparent border-t-[20px] border-t-brand-cream z-10 transition-transform group-hover:-translate-y-2" />
+                <div className="h-full flex items-center justify-center p-6">
+                  <div className="w-32 h-20 bg-brand-cream border-2 border-brand-black flex items-center justify-center shadow-lg transform group-hover:rotate-3 group-hover:scale-110 transition duration-300">
+                    <span className="font-display text-2xl text-brand-black">FREE</span>
+                  </div>
+                </div>
+                <div className="absolute bottom-4 right-4">
+                  <span className="font-display text-brand-cream text-lg">No Cost</span>
+                </div>
+                <div className="absolute top-4 right-4 text-brand-cream font-bold text-xs bg-brand-black px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity">$0</div>
+              </div>
+            </ScrollReveal>
+
+            <ScrollReveal delay={0.3}>
+              <div className="group relative bg-brand-red h-64 md:h-64 overflow-hidden border-t border-brand-cream cursor-pointer">
+                <div className="absolute top-4 left-4 bg-white text-brand-red text-[10px] font-bold px-2 py-1 transform -rotate-12 group-hover:rotate-0 transition-transform">NEW</div>
+                <div className="h-full flex items-center justify-center p-6">
+                  <div className="w-40 h-24 bg-brand-cream border-2 border-brand-black flex items-center justify-center shadow-lg transform group-hover:rotate-3 group-hover:scale-110 transition duration-300">
+                    <span className="font-display text-2xl text-brand-black">1/DAY</span>
+                  </div>
+                </div>
+                <div className="absolute bottom-4 left-4">
+                  <span className="font-display text-brand-black text-lg">Post Limit</span>
+                </div>
+                <div className="absolute bottom-4 right-4 text-brand-black font-bold text-xs">1 daily</div>
+              </div>
+            </ScrollReveal>
+          </div>
+
+          {/* Footer Decorative Triangle */}
+          <div className="absolute bottom-[-20px] left-1/2 transform -translate-x-1/2 w-full flex justify-center z-10">
+            <div className="w-32 h-10 bg-brand-cream" style={{ clipPath: 'polygon(50% 100%, 0 0, 100% 0)' }} />
           </div>
         </section>
 
-        {/* ===== POINTS SYSTEM ===== */}
-        <section style={{ padding: '6rem 2rem', maxWidth: '900px', margin: '0 auto' }}>
-          <ScrollReveal>
-            <h2 style={{
-              textAlign: 'center',
-              fontSize: 'clamp(2rem, 4vw, 3rem)',
-              marginBottom: '3rem',
-            }}>
-              the points system
-            </h2>
-          </ScrollReveal>
+        {/* ===== POINTS TABLE — Menu Style ===== */}
+        <section id="pricing" className="bg-brand-cream py-16 relative">
+          <div className="max-w-4xl mx-auto px-8">
+            <ScrollReveal>
+              <div className="text-center mb-12">
+                <h2 className="font-display text-5xl md:text-6xl text-brand-red uppercase tracking-tight" style={{ textShadow: '2px 2px 0px rgba(0,0,0,0.1)' }}>
+                  The Points
+                </h2>
+                <p className="text-brand-black/60 mt-2 text-sm font-bold uppercase tracking-wider">Free for all · No hidden fees</p>
+              </div>
+            </ScrollReveal>
 
-          <div className="neu-card" style={{ padding: '2rem', overflow: 'hidden' }}>
-            <table className="leaderboard-table" aria-label="Points system">
-              <thead>
-                <tr>
-                  <th scope="col">Action</th>
-                  <th scope="col" style={{ textAlign: 'center' }}>Points</th>
-                  <th scope="col">Note</th>
-                </tr>
-              </thead>
-              <tbody>
+            <ScrollReveal delay={0.1}>
+              <div className="bg-brand-black text-brand-cream p-8 shadow-[10px_10px_0px_rgba(233,78,51,0.3)] border-2 border-brand-red">
+                {/* Table header */}
+                <div className="grid grid-cols-3 gap-4 pb-4 border-b border-brand-cream/20 mb-4 text-[10px] font-bold uppercase tracking-widest text-brand-yellow">
+                  <span>Action</span>
+                  <span className="text-center">Points</span>
+                  <span className="text-right">Note</span>
+                </div>
+                {/* Rows */}
                 {[
-                  { action: 'Click Play', points: '+5', note: 'Start watching', color: 'var(--accent)' },
-                  { action: 'Watch 50%', points: '+70', note: 'Halfway through', color: 'var(--success)' },
-                  { action: 'Full Watch', points: '+100', note: 'Entire video', color: 'var(--success)' },
-                  { action: 'Skip before 50%', points: '-5', note: 'Penalty', color: 'var(--danger)' },
+                  { action: 'Click Play', points: '+5', note: 'Start watching', color: 'text-brand-yellow' },
+                  { action: 'Watch 50%', points: '+70', note: 'Halfway through', color: 'text-brand-green' },
+                  { action: 'Full Watch', points: '+100', note: 'Entire video', color: 'text-brand-green' },
+                  { action: 'Skip Before 50%', points: '-5', note: 'Penalty', color: 'text-brand-red' },
                 ].map((row, i) => (
-                  <ScrollReveal key={row.action} delay={i * 0.1}>
-                    <tr>
-                      <td style={{ fontWeight: 600 }}>{row.action}</td>
-                      <td style={{
-                        textAlign: 'center',
-                        fontFamily: "'Playfair Display', serif",
-                        fontWeight: 900,
-                        fontSize: '1.2rem',
-                        color: row.color,
-                      }}>
-                        {row.points}
-                      </td>
-                      <td style={{ color: 'var(--text-muted)' }}>{row.note}</td>
-                    </tr>
-                  </ScrollReveal>
+                  <div key={row.action} className="menu-item py-3 border-b border-brand-cream/10 group hover:text-brand-yellow transition-colors">
+                    <span className="font-bold text-sm uppercase tracking-wider">{row.action}</span>
+                    <span className="menu-dots group-hover:border-brand-yellow" style={{ borderBottomColor: 'rgba(243,239,224,0.2)' }} />
+                    <span className={`font-display text-2xl font-bold ${row.color}`}>{row.points}</span>
+                  </div>
                 ))}
-              </tbody>
-            </table>
+                <div className="mt-4 text-[10px] text-brand-cream/50 uppercase tracking-wider">
+                  Creator posting bonus: None · Prevents gaming
+                </div>
+              </div>
+            </ScrollReveal>
           </div>
-
-          <ScrollReveal delay={0.4}>
-            <div className="neu-card-inset" style={{
-              padding: '1.25rem',
-              marginTop: '1.5rem',
-              textAlign: 'center',
-              color: 'var(--text-muted)',
-              fontSize: '0.85rem',
-            }}>
-              <strong style={{ color: 'var(--text-secondary)' }}>Creator posting bonus: None.</strong>{' '}
-              Your content earning views doesn't earn YOU points. This prevents gaming.
-            </div>
-          </ScrollReveal>
         </section>
 
         {/* ===== STATS ===== */}
-        <section style={{
-          padding: '8rem 2rem',
-          background: 'linear-gradient(180deg, transparent 0%, rgba(91, 141, 239, 0.03) 50%, transparent 100%)',
-        }}>
-          <div style={{
-            maxWidth: '1000px',
-            margin: '0 auto',
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '3rem',
-            textAlign: 'center',
-          }}>
+        <section className="bg-brand-yellow py-20 relative overflow-hidden">
+          <div className="max-w-5xl mx-auto px-8 grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
             {[
-              { value: 0, suffix: '', label: 'Cost to users' },
-              { value: 1, suffix: '/day', label: 'Post limit' },
-              { value: 100, suffix: '', label: 'Max leaderboard' },
+              { value: 0, suffix: '', label: 'Cost to Users', sublabel: 'Free forever' },
+              { value: 1, suffix: '/day', label: 'Post Limit', sublabel: '1 video ad daily' },
+              { value: 100, suffix: '+', label: 'Max Leaderboard', sublabel: 'Top performers' },
             ].map((stat, i) => (
               <ScrollReveal key={stat.label} delay={i * 0.15}>
-                <div>
-                  <div style={{
-                    fontFamily: "'Playfair Display', serif",
-                    fontSize: 'clamp(2.5rem, 5vw, 4rem)',
-                    fontWeight: 900,
-                    background: 'linear-gradient(135deg, var(--accent), var(--success))',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text',
-                  }}>
+                <div className="bg-brand-cream border-4 border-brand-black p-8 shadow-[6px_6px_0px_rgba(0,0,0,0.2)] hover:shadow-[2px_2px_0px_rgba(0,0,0,0.2)] hover:translate-x-[4px] hover:translate-y-[4px] transition-all duration-300">
+                  <div className="font-display text-5xl md:text-6xl text-brand-red mb-2">
                     <AnimatedCounter target={stat.value} />{stat.suffix}
                   </div>
-                  <div style={{
-                    color: 'var(--text-muted)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.1em',
-                    fontSize: '0.8rem',
-                    marginTop: '0.5rem',
-                  }}>
-                    {stat.label}
-                  </div>
+                  <div className="font-bold text-xs uppercase tracking-widest text-brand-black/80 mb-1">{stat.label}</div>
+                  <div className="text-[10px] text-brand-black/50 uppercase tracking-wider">{stat.sublabel}</div>
                 </div>
               </ScrollReveal>
             ))}
@@ -885,110 +687,110 @@ export default function LandingPage({ onEnter }) {
         </section>
 
         {/* ===== VS COMPARISON ===== */}
-        <section style={{ padding: '6rem 2rem', maxWidth: '800px', margin: '0 auto' }}>
-          <ScrollReveal>
-            <h2 style={{
-              textAlign: 'center',
-              fontSize: 'clamp(2rem, 4vw, 3rem)',
-              marginBottom: '3rem',
-            }}>
-              outscroll vs the rest
-            </h2>
-          </ScrollReveal>
+        <section className="bg-brand-cream py-16 relative">
+          <div className="max-w-4xl mx-auto px-8">
+            <ScrollReveal>
+              <div className="text-center mb-8">
+                <h2 className="font-display text-4xl md:text-5xl text-brand-red uppercase tracking-tight" style={{ textShadow: '2px 2px 0px #fdb913' }}>
+                  OutScroll vs The Rest
+                </h2>
+              </div>
+            </ScrollReveal>
 
-          <div className="neu-card" style={{ padding: '2rem', overflow: 'hidden' }}>
-            <table className="leaderboard-table" aria-label="Feature comparison">
-              <thead>
-                <tr>
-                  <th scope="col">Feature</th>
-                  <th scope="col" style={{ textAlign: 'center', color: 'var(--accent)' }}>OutScroll</th>
-                  <th scope="col" style={{ textAlign: 'center' }}>Others</th>
-                </tr>
-              </thead>
-              <tbody>
+            <ScrollReveal delay={0.1}>
+              <div className="bg-brand-black text-brand-cream border-2 border-brand-red shadow-[8px_8px_0px_rgba(233,78,51,0.3)] overflow-hidden">
+                {/* Table header */}
+                <div className="grid grid-cols-3 gap-4 p-4 bg-brand-red text-brand-cream text-[10px] font-bold uppercase tracking-widest">
+                  <span>Feature</span>
+                  <span className="text-center text-brand-yellow">OutScroll</span>
+                  <span className="text-center">Others</span>
+                </div>
+                {/* Rows */}
                 {[
                   { feature: 'Cost', outscroll: 'Free forever', other: 'Pay to rank' },
                   { feature: 'Leaderboard', outscroll: 'Engagement-based', other: 'Follower count' },
                   { feature: 'Content', outscroll: 'Reels, Shorts, TikTok', other: 'Limited formats' },
-                  { feature: 'Approval', outscroll: 'Verified businesses only', other: 'Anyone' },
+                  { feature: 'Approval', outscroll: 'Verified businesses', other: 'Anyone' },
+                  { feature: 'Creator Bonus', outscroll: 'None (fair play)', other: 'Pay-to-rank' },
                 ].map((row, i) => (
-                  <ScrollReveal key={row.feature} delay={i * 0.1}>
-                    <tr>
-                      <td style={{ fontWeight: 600 }}>{row.feature}</td>
-                      <td style={{ textAlign: 'center', color: 'var(--accent)', fontWeight: 700 }}>{row.outscroll}</td>
-                      <td style={{ textAlign: 'center', color: 'var(--text-muted)' }}>{row.other}</td>
-                    </tr>
-                  </ScrollReveal>
+                  <div key={row.feature} className="grid grid-cols-3 gap-4 p-4 border-b border-brand-cream/10 group hover:bg-brand-cream/5 transition-colors">
+                    <span className="font-bold text-sm uppercase tracking-wider">{row.feature}</span>
+                    <span className="text-center text-brand-green font-bold text-sm">{row.outscroll}</span>
+                    <span className="text-center text-brand-cream/40 text-sm">{row.other}</span>
+                  </div>
                 ))}
-              </tbody>
-            </table>
+              </div>
+            </ScrollReveal>
           </div>
         </section>
 
         {/* ===== FINAL CTA ===== */}
-        <section style={{
-          padding: '10rem 2rem',
-          textAlign: 'center',
-        }}>
-          <ScrollReveal>
-            <h2 style={{
-              fontFamily: "'Playfair Display', serif",
-              fontSize: 'clamp(2.5rem, 6vw, 5rem)',
-              fontWeight: 900,
-              marginBottom: '1.5rem',
-              lineHeight: 1,
-            }}>
-              <span style={{ color: 'var(--text-primary)' }}>ready to</span>
-              <br />
-              <span style={{
-                background: 'linear-gradient(135deg, var(--accent), var(--success))',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}>
-                climb?
-              </span>
-            </h2>
-            <p style={{
-              color: 'var(--text-muted)',
-              fontSize: '1.1rem',
-              marginBottom: '3rem',
-            }}>
-              Join for free. Watch content. Rise to #1.
-            </p>
-            <button
-              className="neu-btn neu-btn-primary"
-              onClick={onEnter}
-              style={{
-                padding: '1.25rem 4rem',
-                fontSize: '1.1rem',
-                fontWeight: 800,
-                textTransform: 'uppercase',
-                letterSpacing: '0.12em',
-              }}
-            >
-              Start Now
-            </button>
-          </ScrollReveal>
-        </section>
+        <section className="bg-brand-red py-24 relative overflow-hidden">
+          {/* Decorative elements */}
+          <div className="absolute top-8 left-8 w-16 h-16 border-4 border-brand-cream/20 rotate-45" />
+          <div className="absolute bottom-8 right-8 w-12 h-12 bg-brand-yellow rounded-full border-2 border-brand-black animate-bounce-slow" />
+          <div className="absolute top-1/2 left-4 -translate-y-1/2 w-8 h-32 border-l-2 border-dashed border-brand-cream/20" />
 
-        {/* ===== FOOTER ===== */}
-        <footer
-          role="contentinfo"
-          style={{
-            textAlign: 'center',
-            padding: '3rem 2rem',
-            color: 'var(--text-muted)',
-            fontSize: '0.75rem',
-            borderTop: '1px solid rgba(255,255,255,0.03)',
-          }}
-        >
-          <span className="logo" style={{ fontSize: '1rem' }}>out<span>scroll</span></span>
-          <div style={{ marginTop: '0.5rem' }}>
-            Free leaderboard for entrepreneurs · Post vertical ads · Climb by watching others
+          <div className="max-w-4xl mx-auto px-8 text-center relative z-10">
+            <ScrollReveal>
+              <h2 className="font-display text-6xl md:text-8xl text-brand-cream tracking-tight leading-none mb-6">
+                READY TO<br />CLIMB?
+              </h2>
+              <p className="text-brand-cream/70 text-lg mb-8 max-w-md mx-auto">
+                Join free. Watch content. Rise to #1. Your competitors are already here.
+              </p>
+              <button
+                className="bg-brand-yellow text-brand-black font-display text-2xl px-12 py-4 border-4 border-brand-black shadow-[8px_8px_0px_rgba(0,0,0,0.5)] hover:shadow-[4px_4px_0px_rgba(0,0,0,0.5)] hover:translate-x-[4px] hover:translate-y-[4px] transition-all duration-200 uppercase tracking-wider"
+                onClick={onEnter}
+              >
+                Start Now
+              </button>
+            </ScrollReveal>
           </div>
-        </footer>
-      </div>
+        </section>
+      </main>
+
+      {/* ===== FOOTER ===== */}
+      <footer className="bg-brand-black text-brand-cream pt-16 pb-8 px-8 md:px-12 relative z-0">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-12">
+          {/* Left Info */}
+          <div className="text-[10px] md:text-xs font-bold uppercase tracking-widest space-y-2 opacity-70">
+            <div>Open for Businesses</div>
+            <div>Free Tier Available</div>
+            <div className="pt-4">Remote / Global</div>
+            <div>India · Worldwide</div>
+          </div>
+
+          {/* Center Logo */}
+          <div className="mx-auto mb-8 md:mb-0">
+            <div className="w-32 h-16 border border-brand-cream/30 flex items-center justify-center hover:border-brand-cream hover:bg-white/5 transition-all cursor-pointer">
+              <div className="w-24 h-8 border border-brand-cream/30 flex items-center justify-center transform rotate-180">
+                <span className="font-display text-sm tracking-widest">OUTSCROLL</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Links */}
+          <div className="flex flex-col items-end gap-2">
+            <div className="flex gap-4 text-[10px] md:text-xs font-bold uppercase tracking-widest">
+              <button onClick={onEnter} className="hover:text-brand-red transition">Get Started</button>
+              <a href="#how-it-works" className="hover:text-brand-red transition">How It Works</a>
+            </div>
+            <div className="flex gap-4 text-[10px] md:text-xs font-bold uppercase tracking-widest">
+              <a href="#features" className="hover:text-brand-red transition">Features</a>
+              <a href="#pricing" className="hover:text-brand-red transition">Pricing</a>
+            </div>
+            <div className="flex gap-3 mt-4">
+              <div className="w-6 h-6 border border-brand-cream rotate-45 flex items-center justify-center hover:bg-brand-cream hover:text-brand-black transition cursor-pointer group">
+                <span className="-rotate-45 font-bold text-xs group-hover:rotate-0 transition-transform">▶</span>
+              </div>
+              <div className="w-6 h-6 border border-brand-cream rotate-45 flex items-center justify-center hover:bg-brand-cream hover:text-brand-black transition cursor-pointer group">
+                <span className="-rotate-45 font-bold text-xs group-hover:rotate-0 transition-transform">↗</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
