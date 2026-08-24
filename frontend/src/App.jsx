@@ -254,7 +254,7 @@ function VideoCard({ video, onTrack, user }) {
           }}>{icon}</div>
           <div>
             <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-heading)' }}>{video.username}</div>
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', letterSpacing: '0.05em' }}>
               <span aria-label={`Platform: ${platform}`}>{platform}</span> ·{' '}
               <time dateTime={video.created_at}>{new Date(video.created_at).toLocaleDateString()}</time>
             </div>
@@ -463,7 +463,7 @@ function LeaderboardPage({ user, setPage }) {
                 <div style={{ fontFamily: "'Anton', sans-serif", fontSize: isFirst ? '2rem' : '1.5rem', color: getRankColor(entry?.rank) }}>
                   {entry?.total_points.toLocaleString()}
                 </div>
-                <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>points</div>
+                <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>points</div>
                 <button className="btn btn-ghost" style={{ fontSize: '0.65rem', padding: '0.3rem 0.6rem' }}
                   onClick={() => shareRank(entry?.username, entry?.rank, entry?.total_points)}
                   aria-label={`Share ${getRankLabel(entry?.rank)} rank`}>📤 Share</button>
@@ -541,16 +541,16 @@ function AuthPage({ onLogin }) {
       <form onSubmit={handleSubmit} noValidate>
         {mode === 'signup' && (
           <div style={{ marginBottom: '1rem' }}>
-            <label htmlFor="auth-email" style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.4rem', fontWeight: 700 }}>Email</label>
+            <label htmlFor="auth-email" style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: '0.4rem', fontWeight: 700 }}>Email</label>
             <input id="auth-email" name="email" type="email" required autoComplete="email" className="input" placeholder="you@email.com" />
           </div>
         )}
         <div style={{ marginBottom: '1rem' }}>
-          <label htmlFor="auth-username" style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.4rem', fontWeight: 700 }}>Username</label>
+          <label htmlFor="auth-username" style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: '0.4rem', fontWeight: 700 }}>Username</label>
           <input id="auth-username" ref={usernameRef} name="username" required minLength={3} maxLength={20} autoComplete="username" className="input" placeholder="pick a username" />
         </div>
         <div style={{ marginBottom: '1.5rem' }}>
-          <label htmlFor="auth-password" style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.4rem', fontWeight: 700 }}>Password</label>
+          <label htmlFor="auth-password" style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: '0.4rem', fontWeight: 700 }}>Password</label>
           <input id="auth-password" name="password" type="password" required minLength={8} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} className="input" placeholder="min 8 chars, upper + lower + number" />
         </div>
 
@@ -622,7 +622,7 @@ function SubmitPage({ user }) {
 
       <form onSubmit={handleSubmit}>
         <div className="card" style={{ padding: '1.5rem' }}>
-          <label htmlFor="submit-url" style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem', fontWeight: 700 }}>Video URL</label>
+          <label htmlFor="submit-url" style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: '0.5rem', fontWeight: 700 }}>Video URL</label>
           <div style={{ position: 'relative' }}>
             <input id="submit-url" type="url" value={url} onChange={e => setUrl(e.target.value)} required className="input"
               placeholder="https://www.tiktok.com/@creator/video/..." disabled={hasPostedToday}
@@ -680,7 +680,7 @@ function ProfilePage({ user }) {
             </span>
           </div>
           <div className="card-inset" style={{ padding: '0.5rem 1rem', textAlign: 'center' }}>
-            <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Rank</div>
+            <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>Rank</div>
             <div style={{ fontFamily: "'Anton', sans-serif", fontSize: '1.75rem', color: profile?.rank <= 3 ? ['var(--gold)', 'var(--silver)', 'var(--bronze)'][profile.rank - 1] : 'var(--text-heading)' }}>
               #{profile?.rank}
             </div>
@@ -688,7 +688,7 @@ function ProfilePage({ user }) {
         </div>
 
         <div className="card-inset" style={{ padding: '1.25rem', textAlign: 'center' }}>
-          <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.25rem' }}>Total Points</div>
+          <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: '0.25rem' }}>Total Points</div>
           <div className="points-display" aria-label={`${profile?.user?.total_points.toLocaleString()} total points`}>
             {profile?.user?.total_points.toLocaleString()}
           </div>
@@ -696,11 +696,11 @@ function ProfilePage({ user }) {
 
         <div style={{ marginTop: '1rem', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem' }}>
           <div className="card-inset" style={{ padding: '0.75rem', textAlign: 'center' }}>
-            <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Videos Posted</div>
+            <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>Videos Posted</div>
             <div style={{ fontWeight: 800, fontSize: '1.25rem', color: 'var(--text-heading)', marginTop: '0.25rem' }}>{profile?.videos?.length || 0}</div>
           </div>
           <div className="card-inset" style={{ padding: '0.75rem', textAlign: 'center' }}>
-            <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Member Since</div>
+            <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>Member Since</div>
             <div style={{ fontWeight: 800, fontSize: '1.25rem', color: 'var(--text-heading)', marginTop: '0.25rem' }}>
               {new Date(profile?.user?.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
             </div>

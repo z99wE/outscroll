@@ -120,7 +120,7 @@ h1, h2, h3, h4, .font-display {
   font-family: 'Roboto Condensed', 'Inter', sans-serif;
   font-weight: 700;
   font-size: 0.85rem;
-  text-transform: uppercase;
+  
   letter-spacing: 0.06em;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -172,7 +172,7 @@ h1, h2, h3, h4, .font-display {
   color: var(--text-secondary);
   font-weight: 700;
   font-size: 0.8rem;
-  text-transform: uppercase;
+  
   letter-spacing: 0.06em;
   cursor: pointer;
   transition: color 0.15s;
@@ -192,7 +192,7 @@ h1, h2, h3, h4, .font-display {
   padding: 0.2rem 0.5rem;
   font-size: 0.65rem;
   font-weight: 700;
-  text-transform: uppercase;
+  
   letter-spacing: 0.05em;
   border-radius: 4px;
 }
@@ -232,7 +232,7 @@ h1, h2, h3, h4, .font-display {
 .leaderboard-table { width: 100%; border-collapse: separate; border-spacing: 0 4px; }
 .leaderboard-table th {
   padding: 0.625rem 1rem; text-align: left;
-  font-size: 0.7rem; text-transform: uppercase;
+  font-size: 0.7rem; 
   letter-spacing: 0.1em; color: var(--text-muted); font-weight: 700;
 }
 .leaderboard-table td { padding: 0.75rem 1rem; }

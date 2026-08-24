@@ -178,7 +178,7 @@ export default function LandingPage({ onEnter }) {
       {/* ===== HEADER ===== */}
       <header style={{ paddingTop: '5rem', paddingBottom: '4rem', position: 'relative', zIndex: 20, overflow: 'hidden' }}>
         {/* Nav */}
-        <div style={{ position: 'relative', zIndex: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '0 2rem', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.15em', color: '#e94e33', textTransform: 'uppercase' }}>
+        <div style={{ position: 'relative', zIndex: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '0 2rem', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.15em', color: '#e94e33',  }}>
           <div style={{ lineHeight: 1.4, borderLeft: '2px solid #e94e33', paddingLeft: '0.5rem' }}>
             Available for<br />Businesses
           </div>
@@ -206,7 +206,7 @@ export default function LandingPage({ onEnter }) {
             <div style={{ position: 'absolute', inset: '4px', border: '1px solid #e94e33', transform: 'rotate(1deg)', opacity: 0.15 }} />
             <div style={{ position: 'absolute', inset: '4px', border: '1px solid #e94e33', transform: 'rotate(-1deg)', opacity: 0.15 }} />
             <div style={{ textAlign: 'center' }}>
-              <span style={{ fontSize: '0.6rem', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.4em', background: '#e94e33', color: '#f5f1eb', padding: '0.2rem 0.5rem', display: 'inline-block', marginBottom: '0.5rem' }}>Free Engagement Leaderboard</span>
+              <span style={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.4em', background: '#e94e33', color: '#f5f1eb', padding: '0.2rem 0.5rem', display: 'inline-block', marginBottom: '0.5rem' }}>Free Engagement Leaderboard</span>
               <h1 style={{ fontFamily: "'Anton', sans-serif", fontSize: '4rem', color: '#e94e33', letterSpacing: '-0.02em', lineHeight: 1, textShadow: '2px 2px 0px rgba(0,0,0,0.06)' }}>OUTSCROLL</h1>
               <div style={{ fontFamily: "'Anton', sans-serif", fontSize: '1rem', color: '#1a1a1a', letterSpacing: '0.1em', marginTop: '0.25rem' }}>CLIMB THE LADDER</div>
             </div>
@@ -219,7 +219,7 @@ export default function LandingPage({ onEnter }) {
         <div style={{ background: '#e94e33', padding: '0.75rem 0', overflow: 'hidden', borderTop: '3px solid #1a1a1a', borderBottom: '3px solid #1a1a1a' }}>
           <div style={{ display: 'flex', width: 'max-content', animation: 'marquee 20s linear infinite' }}>
             {Array.from({ length: 8 }).map((_, i) => (
-              <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: '1.5rem', padding: '0 1.5rem', whiteSpace: 'nowrap', fontFamily: "'Anton', sans-serif", fontSize: '1.5rem', color: '#f5f1eb', textTransform: 'uppercase' }}>
+              <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: '1.5rem', padding: '0 1.5rem', whiteSpace: 'nowrap', fontFamily: "'Anton', sans-serif", fontSize: '1.5rem', color: '#f5f1eb',  }}>
                 OUTSCROLL <span style={{ color: '#fdb913' }}>●</span> YOUR COMPETITOR <span style={{ color: '#fdb913' }}>●</span> CLIMB THE LADDER <span style={{ color: '#fdb913' }}>●</span> FREE <span style={{ color: '#fdb913' }}>●</span>
               </span>
             ))}
@@ -230,7 +230,7 @@ export default function LandingPage({ onEnter }) {
         <section id="how-it-works" style={{ padding: '5rem 2rem', maxWidth: '1100px', margin: '0 auto' }}>
           <ScrollReveal>
             <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
-              <h2 style={{ fontFamily: "'Anton', sans-serif", fontSize: '2.5rem', color: '#1a1a1a', textTransform: 'uppercase', marginBottom: '0.5rem' }}>How It Works</h2>
+              <h2 style={{ fontFamily: "'Anton', sans-serif", fontSize: '2.5rem', color: '#1a1a1a', marginBottom: '0.5rem' }}>How It Works</h2>
               <p style={{ color: '#666', fontSize: '1rem' }}>Four steps. Zero complexity.</p>
             </div>
           </ScrollReveal>
@@ -255,7 +255,7 @@ export default function LandingPage({ onEnter }) {
                 >
                   <div style={{ position: 'absolute', top: '-0.25rem', right: '0.75rem', fontFamily: "'Anton', sans-serif", fontSize: '4rem', color: item.color, opacity: 0.08, lineHeight: 1 }}>{item.step}</div>
                   <div style={{ fontSize: '1.75rem', marginBottom: '0.75rem' }}>{item.icon}</div>
-                  <h3 style={{ fontFamily: "'Anton', sans-serif", fontSize: '1.25rem', color: '#1a1a1a', marginBottom: '0.5rem', textTransform: 'uppercase' }}>{item.title}</h3>
+                  <h3 style={{ fontFamily: "'Anton', sans-serif", fontSize: '1.25rem', color: '#1a1a1a', marginBottom: '0.5rem',  }}>{item.title}</h3>
                   <p style={{ color: '#666', fontSize: '0.9rem', lineHeight: 1.5 }}>{item.desc}</p>
                 </div>
               </ScrollReveal>
@@ -268,15 +268,15 @@ export default function LandingPage({ onEnter }) {
           <div style={{ maxWidth: '1000px', margin: '0 auto', display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '4rem', flexWrap: 'wrap' }}>
             <div style={{ flex: '1 1 300px' }}>
               <ScrollReveal>
-                <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.3em', color: '#fdb913', marginBottom: '1rem', borderLeft: '2px solid #fdb913', paddingLeft: '0.75rem' }}>See It In Action</div>
-                <h2 style={{ fontFamily: "'Anton', sans-serif", fontSize: '3rem', color: '#f5f1eb', lineHeight: 1.1, textTransform: 'uppercase', marginBottom: '1rem' }}>POST.<br />WATCH.<br />CLIMB.</h2>
+                <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.3em', color: '#fdb913', marginBottom: '1rem', borderLeft: '2px solid #fdb913', paddingLeft: '0.75rem' }}>See It In Action</div>
+                <h2 style={{ fontFamily: "'Anton', sans-serif", fontSize: '3rem', color: '#f5f1eb', lineHeight: 1.1, marginBottom: '1rem' }}>POST.<br />WATCH.<br />CLIMB.</h2>
                 <p style={{ color: 'rgba(245,241,235,0.7)', fontSize: '1rem', lineHeight: 1.6, marginBottom: '2rem' }}>
                   Post your business video ad. Watch other entrepreneurs' content. Earn points. Climb the leaderboard.
                 </p>
                 <button onClick={onEnter} style={{
                   background: '#fdb913', color: '#1a1a1a', border: '2px solid #1a1a1a',
                   fontFamily: "'Anton', sans-serif", fontSize: '1rem', padding: '0.75rem 2rem',
-                  cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.08em',
+                  cursor: 'pointer', letterSpacing: '0.08em',
                   boxShadow: '4px 4px 0px rgba(0,0,0,1)',
                   transition: 'all 0.15s ease',
                 }}
@@ -312,8 +312,8 @@ export default function LandingPage({ onEnter }) {
         <section style={{ padding: '3rem 0', background: '#f5f1eb' }}>
           <ScrollReveal>
             <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
-              <h2 style={{ fontFamily: "'Anton', sans-serif", fontSize: '2rem', color: '#e94e33', textTransform: 'uppercase' }}>Always Watching</h2>
-              <p style={{ color: '#999', fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '0.5rem' }}>Businesses posting. Entrepreneurs engaging.</p>
+              <h2 style={{ fontFamily: "'Anton', sans-serif", fontSize: '2rem', color: '#e94e33',  }}>Always Watching</h2>
+              <p style={{ color: '#999', fontSize: '0.85rem', fontWeight: 600, letterSpacing: '0.05em', marginTop: '0.5rem' }}>Businesses posting. Entrepreneurs engaging.</p>
             </div>
           </ScrollReveal>
           <div style={{ height: '350px', position: 'relative', zIndex: 2 }}>
@@ -324,7 +324,7 @@ export default function LandingPage({ onEnter }) {
         {/* ===== FEATURE CARDS ===== */}
         <section id="features" style={{ padding: '4rem 2rem', background: '#f5f1eb' }}>
           <ScrollReveal>
-            <h2 style={{ fontFamily: "'Anton', sans-serif", fontSize: '2.5rem', color: '#e94e33', textTransform: 'uppercase', textAlign: 'center', marginBottom: '2.5rem' }}>What You Get</h2>
+            <h2 style={{ fontFamily: "'Anton', sans-serif", fontSize: '2.5rem', color: '#e94e33', textAlign: 'center', marginBottom: '2.5rem' }}>What You Get</h2>
           </ScrollReveal>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', maxWidth: '1000px', margin: '0 auto' }}>
             {[
@@ -349,7 +349,7 @@ export default function LandingPage({ onEnter }) {
                   </div>
                   <div style={{ position: 'absolute', bottom: 0, width: '100%', padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontFamily: "'Anton', sans-serif", fontSize: '1.25rem', color: '#f5f1eb' }}>{card.title}</span>
-                    <span style={{ fontSize: '0.6rem', fontWeight: 700, background: card.badgeBg, color: card.bg === '#d6cbb2' ? '#e94e33' : '#f5f1eb', padding: '0.2rem 0.5rem', textTransform: 'uppercase' }}>{card.badge}</span>
+                    <span style={{ fontSize: '0.6rem', fontWeight: 700, background: card.badgeBg, color: card.bg === '#d6cbb2' ? '#e94e33' : '#f5f1eb', padding: '0.2rem 0.5rem',  }}>{card.badge}</span>
                   </div>
                 </div>
               </ScrollReveal>
@@ -360,26 +360,41 @@ export default function LandingPage({ onEnter }) {
         {/* ===== POINTS TABLE ===== */}
         <section id="pricing" style={{ padding: '4rem 2rem', maxWidth: '700px', margin: '0 auto' }}>
           <ScrollReveal>
-            <h2 style={{ fontFamily: "'Anton', sans-serif", fontSize: '2.5rem', color: '#e94e33', textTransform: 'uppercase', textAlign: 'center', marginBottom: '2rem' }}>The Points</h2>
+            <h2 style={{ fontFamily: "'Anton', sans-serif", fontSize: '2.5rem', color: '#1a1a1a', textAlign: 'center', marginBottom: '0.5rem' }}>The points</h2>
+            <p style={{ textAlign: 'center', color: '#999', fontSize: '0.85rem', marginBottom: '2rem' }}>Free for all · No hidden fees</p>
           </ScrollReveal>
-          <ScrollReveal delay={0.1}>
-            <div style={{ background: '#1a1a1a', padding: '2rem', boxShadow: '8px 8px 0px rgba(233,78,51,0.3)', border: '2px solid #e94e33' }}>
-              {[
-                { action: 'Click Play', points: '+5', note: 'Start watching', color: '#fdb913' },
-                { action: 'Watch 50%', points: '+70', note: 'Halfway through', color: '#008f4c' },
-                { action: 'Full Watch', points: '+100', note: 'Entire video', color: '#008f4c' },
-                { action: 'Skip Before 50%', points: '-5', note: 'Penalty', color: '#e94e33' },
-              ].map((row, i) => (
-                <div key={row.action} style={{
-                  display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
-                  padding: '0.75rem 0', borderBottom: i < 3 ? '1px solid rgba(245,241,235,0.1)' : 'none',
-                }}>
-                  <span style={{ fontWeight: 700, fontSize: '0.85rem', textTransform: 'uppercase', color: '#f5f1eb', letterSpacing: '0.03em' }}>{row.action}</span>
-                  <span style={{ flex: 1, borderBottom: '2px dotted rgba(245,241,235,0.15)', margin: '0 0.75rem' }} />
-                  <span style={{ fontFamily: "'Anton', sans-serif", fontSize: '1.5rem', color: row.color }}>{row.points}</span>
+          <div style={{ display: 'grid', gap: '0.75rem' }}>
+            {[
+              { action: 'Click play', points: '+5', note: 'Start watching', color: '#005eb8', bg: '#e8f0fe' },
+              { action: 'Watch 50%', points: '+70', note: 'Halfway through', color: '#008f4c', bg: '#e6f7ee' },
+              { action: 'Full watch', points: '+100', note: 'Entire video', color: '#008f4c', bg: '#e6f7ee' },
+              { action: 'Skip before 50%', points: '-5', note: 'Penalty', color: '#e94e33', bg: '#fef0ee' },
+            ].map((row, i) => (
+              <ScrollReveal key={row.action} delay={i * 0.08}>
+                <div style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  padding: '1rem 1.25rem', background: row.bg,
+                  borderRadius: '8px', border: `2px solid ${row.color}20`,
+                  transition: 'transform 0.2s', cursor: 'default',
+                }}
+                  onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.02)'}
+                  onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                >
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: '1rem', color: '#1a1a1a' }}>{row.action}</div>
+                    <div style={{ fontSize: '0.75rem', color: '#999', marginTop: '0.15rem' }}>{row.note}</div>
+                  </div>
+                  <div style={{
+                    fontFamily: "'Anton', sans-serif", fontSize: '2rem', color: row.color,
+                    lineHeight: 1,
+                  }}>{row.points}</div>
                 </div>
-              ))}
-              <div style={{ marginTop: '1rem', fontSize: '0.65rem', color: 'rgba(245,241,235,0.4)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Creator posting bonus: None · Prevents gaming</div>
+              </ScrollReveal>
+            ))}
+          </div>
+          <ScrollReveal delay={0.4}>
+            <div style={{ marginTop: '1rem', textAlign: 'center', fontSize: '0.75rem', color: '#999' }}>
+              Creator posting bonus: None · Prevents gaming
             </div>
           </ScrollReveal>
         </section>
@@ -397,8 +412,8 @@ export default function LandingPage({ onEnter }) {
                   <div style={{ fontFamily: "'Anton', sans-serif", fontSize: '3rem', color: '#e94e33' }}>
                     <AnimatedCounter target={stat.value} />{stat.suffix}
                   </div>
-                  <div style={{ fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#1a1a1a', marginTop: '0.5rem' }}>{stat.label}</div>
-                  <div style={{ fontSize: '0.65rem', color: '#999', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{stat.sub}</div>
+                  <div style={{ fontWeight: 700, fontSize: '0.75rem', letterSpacing: '0.1em', color: '#1a1a1a', marginTop: '0.5rem' }}>{stat.label}</div>
+                  <div style={{ fontSize: '0.65rem', color: '#999', letterSpacing: '0.05em' }}>{stat.sub}</div>
                 </div>
               </ScrollReveal>
             ))}
@@ -408,11 +423,11 @@ export default function LandingPage({ onEnter }) {
         {/* ===== VS COMPARISON ===== */}
         <section style={{ padding: '4rem 2rem', maxWidth: '700px', margin: '0 auto' }}>
           <ScrollReveal>
-            <h2 style={{ fontFamily: "'Anton', sans-serif", fontSize: '2rem', color: '#1a1a1a', textTransform: 'uppercase', textAlign: 'center', marginBottom: '2rem' }}>OutScroll vs The Rest</h2>
+            <h2 style={{ fontFamily: "'Anton', sans-serif", fontSize: '2rem', color: '#1a1a1a', textAlign: 'center', marginBottom: '2rem' }}>OutScroll vs The Rest</h2>
           </ScrollReveal>
           <ScrollReveal delay={0.1}>
             <div style={{ background: '#fdb913', overflow: 'hidden', border: '2px solid #1a1a1a', boxShadow: '6px 6px 0px rgba(0,0,0,0.2)' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', padding: '0.75rem 1rem', background: '#1a1a1a', color: '#fdb913', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', padding: '0.75rem 1rem', background: '#1a1a1a', color: '#fdb913', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em' }}>
                 <span>Feature</span><span style={{ textAlign: 'center', color: '#008f4c' }}>OutScroll</span><span style={{ textAlign: 'center' }}>Others</span>
               </div>
               {[
@@ -423,7 +438,7 @@ export default function LandingPage({ onEnter }) {
                 { feature: 'Creator Bonus', outscroll: 'None (fair play)', other: 'Pay-to-rank' },
               ].map((row, i) => (
                 <div key={row.feature} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', padding: '0.65rem 1rem', borderBottom: i < 4 ? '1px solid rgba(26,26,26,0.12)' : 'none' }}>
-                  <span style={{ fontWeight: 700, fontSize: '0.8rem', textTransform: 'uppercase', color: '#1a1a1a' }}>{row.feature}</span>
+                  <span style={{ fontWeight: 700, fontSize: '0.8rem', color: '#1a1a1a' }}>{row.feature}</span>
                   <span style={{ textAlign: 'center', color: '#008f4c', fontWeight: 700, fontSize: '0.8rem' }}>{row.outscroll}</span>
                   <span style={{ textAlign: 'center', color: 'rgba(26,26,26,0.45)', fontSize: '0.8rem' }}>{row.other}</span>
                 </div>
@@ -437,12 +452,12 @@ export default function LandingPage({ onEnter }) {
           <div style={{ position: 'absolute', top: '2rem', left: '2rem', width: '50px', height: '50px', border: '2px solid rgba(245,241,235,0.15)', transform: 'rotate(45deg)' }} />
           <div style={{ position: 'absolute', bottom: '2rem', right: '2rem', width: '36px', height: '36px', background: '#fdb913', borderRadius: '50%', border: '2px solid #1a1a1a' }} />
           <ScrollReveal>
-            <h2 style={{ fontFamily: "'Anton', sans-serif", fontSize: '4rem', color: '#f5f1eb', textTransform: 'uppercase', lineHeight: 1, marginBottom: '1rem' }}>READY TO<br />CLIMB?</h2>
+            <h2 style={{ fontFamily: "'Anton', sans-serif", fontSize: '4rem', color: '#f5f1eb', lineHeight: 1, marginBottom: '1rem' }}>READY TO<br />CLIMB?</h2>
             <p style={{ color: 'rgba(245,241,235,0.7)', fontSize: '1.1rem', marginBottom: '2.5rem' }}>Join free. Watch content. Rise to #1. Your competitors are already here.</p>
             <button onClick={onEnter} style={{
               background: '#fdb913', color: '#1a1a1a', border: '3px solid #1a1a1a',
               fontFamily: "'Anton', sans-serif", fontSize: '1.25rem', padding: '1rem 3rem',
-              cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.08em',
+              cursor: 'pointer', letterSpacing: '0.08em',
               boxShadow: '6px 6px 0px rgba(0,0,0,0.5)',
               transition: 'all 0.15s ease',
             }}
@@ -455,7 +470,7 @@ export default function LandingPage({ onEnter }) {
 
       {/* ===== FOOTER ===== */}
       <footer style={{ background: '#1a1a1a', padding: '3rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '2rem' }}>
-        <div style={{ fontSize: '0.65rem', color: 'rgba(245,241,235,0.6)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', lineHeight: 2 }}>
+        <div style={{ fontSize: '0.65rem', color: 'rgba(245,241,235,0.6)', fontWeight: 700, letterSpacing: '0.1em', lineHeight: 2 }}>
           <div>Open for Businesses</div>
           <div>Free Tier Available</div>
           <div style={{ marginTop: '0.5rem' }}>India · Worldwide</div>
@@ -464,11 +479,11 @@ export default function LandingPage({ onEnter }) {
           <div style={{ fontFamily: "'Anton', sans-serif", fontSize: '1.25rem', color: '#f5f1eb' }}>OUTSCROLL</div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>
-          <div style={{ display: 'flex', gap: '1.5rem', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-            <button onClick={onEnter} style={{ background: 'none', border: 'none', color: '#f5f1eb', cursor: 'pointer', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700 }}>Get Started</button>
+          <div style={{ display: 'flex', gap: '1.5rem', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em' }}>
+            <button onClick={onEnter} style={{ background: 'none', border: 'none', color: '#f5f1eb', cursor: 'pointer', fontSize: '0.65rem', letterSpacing: '0.1em', fontWeight: 700 }}>Get Started</button>
             <a href="#how-it-works" style={{ color: '#f5f1eb', textDecoration: 'none' }}>How It Works</a>
           </div>
-          <div style={{ display: 'flex', gap: '1.5rem', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+          <div style={{ display: 'flex', gap: '1.5rem', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em' }}>
             <a href="#features" style={{ color: '#f5f1eb', textDecoration: 'none' }}>Features</a>
             <a href="#pricing" style={{ color: '#f5f1eb', textDecoration: 'none' }}>Pricing</a>
           </div>
