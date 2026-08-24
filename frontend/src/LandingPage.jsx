@@ -408,12 +408,12 @@ export default function LandingPage({ onEnter }) {
         {/* ===== VS COMPARISON ===== */}
         <section style={{ padding: '4rem 2rem', maxWidth: '700px', margin: '0 auto' }}>
           <ScrollReveal>
-            <h2 style={{ fontFamily: "'Anton', sans-serif", fontSize: '2rem', color: '#e94e33', textTransform: 'uppercase', textAlign: 'center', marginBottom: '2rem' }}>OutScroll vs The Rest</h2>
+            <h2 style={{ fontFamily: "'Anton', sans-serif", fontSize: '2rem', color: '#1a1a1a', textTransform: 'uppercase', textAlign: 'center', marginBottom: '2rem' }}>OutScroll vs The Rest</h2>
           </ScrollReveal>
           <ScrollReveal delay={0.1}>
-            <div style={{ background: '#1a1a1a', overflow: 'hidden', border: '2px solid #e94e33', boxShadow: '6px 6px 0px rgba(233,78,51,0.3)' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', padding: '0.75rem 1rem', background: '#e94e33', color: '#f5f1eb', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-                <span>Feature</span><span style={{ textAlign: 'center', color: '#fdb913' }}>OutScroll</span><span style={{ textAlign: 'center' }}>Others</span>
+            <div style={{ background: '#fdb913', overflow: 'hidden', border: '2px solid #1a1a1a', boxShadow: '6px 6px 0px rgba(0,0,0,0.2)' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', padding: '0.75rem 1rem', background: '#1a1a1a', color: '#fdb913', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                <span>Feature</span><span style={{ textAlign: 'center', color: '#008f4c' }}>OutScroll</span><span style={{ textAlign: 'center' }}>Others</span>
               </div>
               {[
                 { feature: 'Cost', outscroll: 'Free forever', other: 'Pay to rank' },
@@ -422,10 +422,10 @@ export default function LandingPage({ onEnter }) {
                 { feature: 'Approval', outscroll: 'Verified businesses', other: 'Anyone' },
                 { feature: 'Creator Bonus', outscroll: 'None (fair play)', other: 'Pay-to-rank' },
               ].map((row, i) => (
-                <div key={row.feature} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', padding: '0.65rem 1rem', borderBottom: i < 4 ? '1px solid rgba(245,241,235,0.08)' : 'none' }}>
-                  <span style={{ fontWeight: 700, fontSize: '0.8rem', textTransform: 'uppercase', color: '#f5f1eb' }}>{row.feature}</span>
+                <div key={row.feature} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', padding: '0.65rem 1rem', borderBottom: i < 4 ? '1px solid rgba(26,26,26,0.12)' : 'none' }}>
+                  <span style={{ fontWeight: 700, fontSize: '0.8rem', textTransform: 'uppercase', color: '#1a1a1a' }}>{row.feature}</span>
                   <span style={{ textAlign: 'center', color: '#008f4c', fontWeight: 700, fontSize: '0.8rem' }}>{row.outscroll}</span>
-                  <span style={{ textAlign: 'center', color: 'rgba(245,241,235,0.4)', fontSize: '0.8rem' }}>{row.other}</span>
+                  <span style={{ textAlign: 'center', color: 'rgba(26,26,26,0.45)', fontSize: '0.8rem' }}>{row.other}</span>
                 </div>
               ))}
             </div>
