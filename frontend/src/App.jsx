@@ -72,7 +72,7 @@ function SkipLink() {
 }
 
 // ========== Header ==========
-function Header({ page, setPage, user, onLogout, unreadCount = 0 }) {
+function Header({ page, setPage, user, onLogout, unreadCount = 0, onHome }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   const navItems = [
@@ -110,7 +110,7 @@ function Header({ page, setPage, user, onLogout, unreadCount = 0 }) {
         <button
           className="logo"
           style={{ cursor: 'pointer', background: 'none', border: 'none', fontFamily: 'inherit', fontSize: 'inherit', color: 'inherit' }}
-          onClick={() => setPage('feed')}
+          onClick={onHome}
           aria-label="OutScroll home"
         >out<span>scroll</span></button>
 
@@ -865,7 +865,7 @@ export default function App() {
       <CookieConsent />
       <PWAInstallBanner />
       <div style={{ minHeight: '100vh', background: 'var(--surface)' }}>
-        <Header page={page} setPage={setPage} user={user} onLogout={handleLogout} unreadCount={unreadCount} />
+        <Header page={page} setPage={setPage} user={user} onLogout={handleLogout} unreadCount={unreadCount} onHome={() => { if (!user) { setShowLanding(true); } else { setPage('feed'); } }} />
 
         <main id="main-content" ref={mainRef} tabIndex={-1} role="main"
           style={{ maxWidth: '720px', margin: '0 auto', padding: '2rem 1.5rem', outline: 'none' }}
