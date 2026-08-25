@@ -1303,32 +1303,35 @@ app.post('/api/admin/purge', adminOnly, async (req, res) => {
   const notificationRetentionDays = parseInt(req.body.notification_retention_days, 10) || 30;
 
   try {
-    // Delete old notifications first (smallest, most numerous)
+    // 1. Delete reports FIRST (foreign key to videos)
+    const reportResult = await pool.query(
+      `DELETE FROM reports WHERE video_id IN (
+        SELECT id FROM videos WHERE created_at < NOW() - ($1 || ' days')::interval
+      )`,
+      [videoRetentionDays]
+    );
+
+    // 2. Delete old notifications (smallest, most numerous)
     const notifResult = await pool.query(
-      'DELETE FROM notifications WHERE created_at < NOW() - INTERVAL $1 DAY',
+      `DELETE FROM notifications WHERE created_at < NOW() - ($1 || ' days')::interval`,
       [notificationRetentionDays]
     );
 
-    // Delete engagements for videos older than retention
+    // 3. Delete engagements for videos older than retention
     const engResult = await pool.query(
       `DELETE FROM engagements WHERE video_id IN (
-        SELECT id FROM videos WHERE created_at < NOW() - INTERVAL $1 DAY
+        SELECT id FROM videos WHERE created_at < NOW() - ($1 || ' days')::interval
       )`,
       [engagementRetentionDays]
     );
 
-    // Delete old videos (cascade will handle remaining references)
+    // 4. Delete old videos (no more foreign key blockers)
     const videoResult = await pool.query(
-      'DELETE FROM videos WHERE created_at < NOW() - INTERVAL $1 DAY',
+      `DELETE FROM videos WHERE created_at < NOW() - ($1 || ' days')::interval`,
       [videoRetentionDays]
     );
 
-    // Also purge reports for deleted videos
-    const reportResult = await pool.query(
-      `DELETE FROM reports WHERE video_id NOT IN (SELECT id FROM videos)`
-    );
-
-    // Purge orphaned notifications for deleted videos
+    // 5. Purge orphaned notifications for deleted videos
     const orphanNotifResult = await pool.query(
       `DELETE FROM notifications WHERE video_id IS NOT NULL AND video_id NOT IN (SELECT id FROM videos)`
     );
@@ -1379,9 +1382,10 @@ app.get('/api/admin/db-size', adminOnly, async (req, res) => {
 // Run purge on server start to keep DB clean
 (async () => {
   try {
-    const notifResult = await pool.query('DELETE FROM notifications WHERE created_at < NOW() - INTERVAL 30 DAY');
-    const engResult = await pool.query(`DELETE FROM engagements WHERE video_id IN (SELECT id FROM videos WHERE created_at < NOW() - INTERVAL 90 DAY)`);
-    const videoResult = await pool.query('DELETE FROM videos WHERE created_at < NOW() - INTERVAL 90 DAY');
+    await pool.query(`DELETE FROM reports WHERE video_id IN (SELECT id FROM videos WHERE created_at < NOW() - INTERVAL '90 days')`);
+    const notifResult = await pool.query(`DELETE FROM notifications WHERE created_at < NOW() - INTERVAL '30 days'`);
+    const engResult = await pool.query(`DELETE FROM engagements WHERE video_id IN (SELECT id FROM videos WHERE created_at < NOW() - INTERVAL '90 days')`);
+    const videoResult = await pool.query(`DELETE FROM videos WHERE created_at < NOW() - INTERVAL '90 days'`);
     if (notifResult.rowCount + engResult.rowCount + videoResult.rowCount > 0) {
       console.log(`[AUTO-PURGE] Notifications: ${notifResult.rowCount}, Engagements: ${engResult.rowCount}, Videos: ${videoResult.rowCount}`);
     }
