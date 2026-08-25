@@ -727,12 +727,35 @@ function SubmitPage({ user }) {
 function ProfilePage({ user }) {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [verifying, setVerifying] = useState(false);
+  const [verifyCode, setVerifyCode] = useState('');
+  const [verifyMsg, setVerifyMsg] = useState(null);
+
+  const authHeaders = { Authorization: `Bearer ${localStorage.getItem('token')}` };
 
   useEffect(() => {
     if (!user) return;
-    axios.get(`${API}/me`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
+    axios.get(`${API}/me`, { headers: authHeaders })
       .then(res => setProfile(res.data)).catch(() => {}).finally(() => setLoading(false));
   }, [user]);
+
+  const sendVerification = async () => {
+    setVerifying(true); setVerifyMsg(null);
+    try {
+      const res = await axios.post(`${API}/auth/send-verification`, { email: user.email }, { headers: authHeaders });
+      setVerifyMsg({ type: 'success', text: res.data.dev_code ? `Code: ${res.data.dev_code}` : 'Code sent! Check your email.' });
+    } catch (err) { setVerifyMsg({ type: 'error', text: err.response?.data?.error || 'Failed to send code' }); }
+    finally { setVerifying(false); }
+  };
+
+  const verifyEmail = async () => {
+    if (!verifyCode) return;
+    try {
+      await axios.post(`${API}/auth/verify-email`, { email: user.email, code: verifyCode }, { headers: authHeaders });
+      setVerifyMsg({ type: 'success', text: 'Email verified!' });
+      setProfile(p => ({ ...p, user: { ...p.user, email_verified: true } }));
+    } catch (err) { setVerifyMsg({ type: 'error', text: err.response?.data?.error || 'Verification failed' }); }
+  };
 
   if (!user) return <AuthPage onLogin={() => {}} />;
   if (loading) return <div className="loading-pulse" style={{ height: '300px', margin: '2rem 0' }} role="status" aria-label="Loading profile" />;
@@ -750,6 +773,34 @@ function ProfilePage({ user }) {
               style={{ marginTop: '0.5rem' }}>
               {profile?.user?.approval_status || 'pending'}
             </span>
+
+            {/* Email verification */}
+            {profile?.user?.email_verified ? (
+              <span className="badge badge-success" style={{ marginTop: '0.5rem', marginLeft: '0.5rem' }}>✓ Email verified</span>
+            ) : (
+              <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: 'var(--warning-light)', border: '1px solid rgba(253,185,19,0.2)', borderRadius: '6px' }}>
+                <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--warning)', marginBottom: '0.5rem' }}>Email not verified</div>
+                {!verifying && !verifyCode ? (
+                  <button className="btn btn-secondary" onClick={sendVerification} style={{ padding: '0.4rem 1rem', fontSize: '0.75rem' }}>
+                    Send verification code
+                  </button>
+                ) : (
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <input type="text" value={verifyCode} onChange={e => setVerifyCode(e.target.value)}
+                      className="input" style={{ flex: 1, padding: '0.5rem', fontSize: '0.85rem' }}
+                      placeholder="6-digit code" maxLength={6} />
+                    <button className="btn btn-primary" onClick={verifyEmail} style={{ padding: '0.5rem 1rem', fontSize: '0.75rem' }}>
+                      Verify
+                    </button>
+                  </div>
+                )}
+                {verifyMsg && (
+                  <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: verifyMsg.type === 'success' ? 'var(--success)' : 'var(--danger)' }}>
+                    {verifyMsg.text}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           <div className="card-inset" style={{ padding: '0.5rem 1rem', textAlign: 'center' }}>
             <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>Rank</div>
@@ -842,9 +893,16 @@ function NotificationsPage({ onMarkRead }) {
             }}>
               <div style={{
                 width: '36px', height: '36px', borderRadius: '50%',
-                background: notif.points > 0 ? 'var(--success-light)' : 'var(--danger-light)',
+                background: notif.type === 'engagement' ? (notif.points > 0 ? 'var(--brand-green)' : 'var(--brand-red)')
+                  : notif.type === 'approval_update' ? 'var(--brand-blue)'
+                  : notif.type === 'new_video' ? 'var(--brand-yellow)'
+                  : 'var(--surface-inset)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem', flexShrink: 0,
-              }}>{notif.points > 0 ? '▶' : '⏭'}</div>
+                color: notif.type === 'new_video' ? '#1a1a1a' : 'white',
+              }}>{notif.type === 'engagement' ? (notif.points > 0 ? '▶' : '⏭')
+                : notif.type === 'approval_update' ? '✓'
+                : notif.type === 'new_video' ? '🎬'
+                : '🔔'}</div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-heading)' }}>{notif.message}</div>
                 <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>

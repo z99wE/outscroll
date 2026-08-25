@@ -13,6 +13,24 @@ CREATE TABLE users (
   business_description TEXT,
   approval_status VARCHAR(20) DEFAULT 'pending' CHECK (approval_status IN ('pending', 'approved', 'rejected')),
   rejection_reason TEXT,
+  email_verified BOOLEAN DEFAULT FALSE,
+  verification_code VARCHAR(6),
+  verification_expires TIMESTAMP,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS site_config (
+  key VARCHAR(50) PRIMARY KEY,
+  value TEXT NOT NULL,
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS reports (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  video_id UUID NOT NULL REFERENCES videos(id),
+  reported_by UUID NOT NULL REFERENCES users(id),
+  reason TEXT NOT NULL,
+  status VARCHAR(20) DEFAULT 'pending',
   created_at TIMESTAMP DEFAULT NOW()
 );
 

@@ -649,6 +649,71 @@ app.post('/api/auth/logout', (req, res) => {
   res.json({ success: true });
 });
 
+// ========== EMAIL VERIFICATION ==========
+app.post('/api/auth/send-verification', authLimiter, async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ error: 'Email required' });
+
+  try {
+    const user = await pool.query('SELECT id, email_verified FROM users WHERE email = $1', [email.toLowerCase().trim()]);
+    if (user.rows.length === 0) return res.status(404).json({ error: 'No account found with this email' });
+    if (user.rows[0].email_verified) return res.status(400).json({ error: 'Email already verified' });
+
+    // Generate 6-digit code
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const expires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+    await pool.query(
+      'UPDATE users SET verification_code = $1, verification_expires = $2 WHERE email = $3',
+      [code, expires, email.toLowerCase().trim()]
+    );
+
+    // In production, send via Resend/Nodemailer/SendGrid
+    // For now, log to console and return in dev mode
+    console.log(`[EMAIL VERIFICATION] Code for ${email}: ${code}`);
+    if (process.env.NODE_ENV !== 'production') {
+      res.json({ success: true, message: 'Verification code sent', dev_code: code });
+    } else {
+      res.json({ success: true, message: 'Verification code sent to your email' });
+    }
+  } catch (err) {
+    console.error('Send verification error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.post('/api/auth/verify-email', authLimiter, async (req, res) => {
+  const { email, code } = req.body;
+  if (!email || !code) return res.status(400).json({ error: 'Email and code required' });
+
+  try {
+    const user = await pool.query(
+      'SELECT id, email_verified, verification_code, verification_expires FROM users WHERE email = $1',
+      [email.toLowerCase().trim()]
+    );
+    if (user.rows.length === 0) return res.status(404).json({ error: 'No account found' });
+
+    const u = user.rows[0];
+    if (u.email_verified) return res.status(400).json({ error: 'Email already verified' });
+    if (!u.verification_code) return res.status(400).json({ error: 'No verification code. Request a new one.' });
+    if (new Date(u.verification_expires) < new Date()) {
+      return res.status(400).json({ error: 'Code expired. Request a new one.' });
+    }
+    if (u.verification_code !== code) {
+      return res.status(400).json({ error: 'Invalid code' });
+    }
+
+    await pool.query(
+      'UPDATE users SET email_verified = TRUE, verification_code = NULL, verification_expires = NULL WHERE id = $1',
+      [u.id]
+    );
+    res.json({ success: true, message: 'Email verified!' });
+  } catch (err) {
+    console.error('Verify email error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // ========== GET FEED ==========
 app.get('/api/videos/feed', async (req, res) => {
   const limit = Math.min(parseInt(req.query.limit, 10) || 20, 50);
