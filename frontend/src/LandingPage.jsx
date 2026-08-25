@@ -321,40 +321,84 @@ export default function LandingPage({ onEnter }) {
           </div>
         </section>
 
-        {/* ===== FEATURE CARDS ===== */}
+        {/* ===== WHAT YOU GET — Menu Style ===== */}
         <section id="features" style={{ padding: '4rem 2rem', background: '#f5f1eb' }}>
           <ScrollReveal>
-            <h2 style={{ fontFamily: "'Anton', sans-serif", fontSize: '2.5rem', color: '#e94e33', textAlign: 'center', marginBottom: '2.5rem' }}>What You Get</h2>
+            <h2 style={{ fontFamily: "'Anton', sans-serif", fontSize: '2.5rem', color: '#e94e33', textAlign: 'center', marginBottom: '0.5rem' }}>What you get</h2>
+            <p style={{ textAlign: 'center', color: '#999', fontSize: '0.85rem', marginBottom: '2.5rem' }}>Free engagement leaderboard for entrepreneurs</p>
           </ScrollReveal>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', maxWidth: '1000px', margin: '0 auto' }}>
-            {[
-              { icon: '🏢', title: 'Verified Only', badge: 'Approval', bg: '#008f4c', badgeBg: '#1a1a1a' },
-              { icon: '📱', title: 'Vertical Video', badge: 'Shorts', bg: '#d6cbb2', badgeBg: '#e94e33' },
-              { icon: '🏆', title: 'Leaderboard', badge: 'Ranks', bg: '#005eb8', badgeBg: '#fdb913' },
-              { icon: '⚡', title: '+100 Points', badge: 'Per watch', bg: '#005eb8', badgeBg: '#e94e33' },
-              { icon: '💰', title: 'No Cost', badge: '$0', bg: '#008f4c', badgeBg: '#1a1a1a' },
-              { icon: '📅', title: '1 Per Day', badge: 'Limit', bg: '#e94e33', badgeBg: 'white' },
-            ].map((card, i) => (
-              <ScrollReveal key={card.title} delay={i * 0.08}>
-                <div style={{
-                  background: card.bg, height: '200px', position: 'relative', overflow: 'hidden',
-                  border: '2px solid #1a1a1a', borderRadius: '4px', cursor: 'pointer',
-                  transition: 'transform 0.3s',
-                }}
-                  onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.03)'}
-                  onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
-                >
-                  <div style={{ height: '70%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <span style={{ fontSize: '3rem' }}>{card.icon}</span>
-                  </div>
-                  <div style={{ position: 'absolute', bottom: 0, width: '100%', padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontFamily: "'Anton', sans-serif", fontSize: '1.25rem', color: '#f5f1eb' }}>{card.title}</span>
-                    <span style={{ fontSize: '0.6rem', fontWeight: 700, background: card.badgeBg, color: card.bg === '#d6cbb2' ? '#e94e33' : '#f5f1eb', padding: '0.2rem 0.5rem',  }}>{card.badge}</span>
-                  </div>
-                </div>
-              </ScrollReveal>
-            ))}
+
+          <div style={{ maxWidth: '700px', margin: '0 auto', display: 'grid', gap: '0' }}>
+            {/* Green sidebar on desktop */}
+            <div style={{ display: 'flex', flexDirection: 'row' }}>
+              <div style={{
+                width: '80px', background: '#008f4c', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                flexShrink: 0, borderRight: '2px solid #1a1a1a',
+              }}>
+                <span style={{ fontFamily: "'Anton', sans-serif", fontSize: '1.5rem', color: '#f5f1eb', writingMode: 'vertical-rl', transform: 'rotate(180deg)', letterSpacing: '0.15em' }}>FEATURES</span>
+              </div>
+
+              <div style={{ flex: 1, padding: '1.5rem 2rem' }}>
+                {[
+                  { icon: '🏢', title: 'Verified businesses only', note: 'Every account is approved by our team. No spam, no bots, no fakes.' },
+                  { icon: '📱', title: 'Vertical video only', note: 'TikTok, Instagram Reels, YouTube Shorts. No landscape. No podcasts.' },
+                  { icon: '🏆', title: 'Engagement-based ranking', note: 'Your rank is determined by how much you watch others. Not followers. Not money.' },
+                  { icon: '⚡', title: '+100 points per full watch', note: '+5 play, +70 halfway, +100 full, -5 skip. Fair points. No gaming.' },
+                  { icon: '💰', title: '$0 forever', note: 'No premium tier. No pay-to-rank. No hidden fees. Ever.' },
+                  { icon: '📅', title: '1 video per day', note: 'Keeps the feed fresh. Prevents spam. Equal opportunity for all.' },
+                ].map((item, i) => (
+                  <ScrollReveal key={item.title} delay={i * 0.08}>
+                    <div style={{
+                      display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
+                      padding: '1rem 0',
+                      borderBottom: i < 5 ? '2px dotted rgba(26,26,26,0.15)' : 'none',
+                      transition: 'transform 0.2s',
+                    }}
+                      onMouseEnter={e => e.currentTarget.style.transform = 'translateX(4px)'}
+                      onMouseLeave={e => e.currentTarget.style.transform = 'translateX(0)'}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.75rem' }}>
+                        <span style={{ fontSize: '1.1rem', flexShrink: 0 }}>{item.icon}</span>
+                        <div>
+                          <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#1a1a1a' }}>{item.title}</div>
+                          <div style={{ fontSize: '0.75rem', color: '#999', marginTop: '0.15rem' }}>{item.note}</div>
+                        </div>
+                      </div>
+                      <div style={{
+                        fontFamily: "'Anton', sans-serif", fontSize: '1.5rem', color: '#008f4c',
+                        flexShrink: 0, marginLeft: '1rem',
+                      }}>
+                        {['✓', '✓', '✓', '+100', '$0', '1'][i]}
+                      </div>
+                    </div>
+                  </ScrollReveal>
+                ))}
+              </div>
+            </div>
           </div>
+
+          {/* CTA box */}
+          <ScrollReveal delay={0.5}>
+            <div style={{
+              maxWidth: '700px', margin: '2rem auto 0',
+              background: '#e94e33', padding: '1.25rem 1.5rem',
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              border: '2px solid #1a1a1a', borderRadius: '4px',
+              transform: 'rotate(-0.5deg)',
+              transition: 'transform 0.3s',
+              cursor: 'pointer',
+            }}
+              onMouseEnter={e => e.currentTarget.style.transform = 'rotate(0deg) scale(1.02)'}
+              onMouseLeave={e => e.currentTarget.style.transform = 'rotate(-0.5deg)'}
+              onClick={() => window.dispatchEvent(new CustomEvent('outscroll-navigate', { detail: 'feed' }))}
+            >
+              <div>
+                <div style={{ fontFamily: "'Anton', sans-serif", fontSize: '1.5rem', color: '#f5f1eb' }}>Ready to start?</div>
+                <div style={{ fontSize: '0.8rem', color: 'rgba(245,241,235,0.8)', marginTop: '0.25rem' }}>Sign up and submit your business in 2 minutes</div>
+              </div>
+              <span style={{ fontFamily: "'Anton', sans-serif", fontSize: '2rem', color: '#fdb913' }}>→</span>
+            </div>
+          </ScrollReveal>
         </section>
 
         {/* ===== POINTS TABLE ===== */}

@@ -509,9 +509,11 @@ function AuthPage({ onLogin }) {
   const [loading, setLoading] = useState(false);
   const usernameRef = useRef(null);
   const errorRef = useRef(null);
+  const formStartTime = useRef(Date.now());
 
   useEffect(() => { if (error && errorRef.current) errorRef.current.focus(); }, [error]);
   useEffect(() => { if (usernameRef.current) usernameRef.current.focus(); }, [mode]);
+  useEffect(() => { formStartTime.current = Date.now(); }, [mode]);
 
   const handleSubmit = async (e) => {
     e.preventDefault(); setError(''); setLoading(true);
@@ -519,7 +521,9 @@ function AuthPage({ onLogin }) {
     try {
       if (mode === 'signup') {
         if (data.password.length < 8) { setError('Password must be at least 8 characters'); setLoading(false); return; }
-        const res = await axios.post(`${API}/auth/signup`, data);
+        const res = await axios.post(`${API}/auth/signup`, data, {
+          headers: { 'x-form-start': String(formStartTime.current) },
+        });
         localStorage.setItem('token', res.data.token); onLogin(res.data.user);
       } else {
         const res = await axios.post(`${API}/auth/login`, { username: data.username, password: data.password });
@@ -539,11 +543,16 @@ function AuthPage({ onLogin }) {
       </p>
 
       <form onSubmit={handleSubmit} noValidate>
+        {/* Honeypot fields — hidden from humans, visible to bots */}
         {mode === 'signup' && (
-          <div style={{ marginBottom: '1rem' }}>
-            <label htmlFor="auth-email" style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: '0.4rem', fontWeight: 700 }}>Email</label>
-            <input id="auth-email" name="email" type="email" required autoComplete="email" className="input" placeholder="you@email.com" />
-          </div>
+          <>
+            <input type="text" name="_website" tabIndex={-1} autoComplete="off" style={{ position: 'absolute', left: '-9999px', opacity: 0, height: 0, width: 0, padding: 0, border: 0 }} aria-hidden="true" />
+            <input type="text" name="_company" tabIndex={-1} autoComplete="off" style={{ position: 'absolute', left: '-9999px', opacity: 0, height: 0, width: 0, padding: 0, border: 0 }} aria-hidden="true" />
+            <div style={{ marginBottom: '1rem' }}>
+              <label htmlFor="auth-email" style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: '0.4rem', fontWeight: 700 }}>Email</label>
+              <input id="auth-email" name="email" type="email" required autoComplete="email" className="input" placeholder="you@email.com" />
+            </div>
+          </>
         )}
         <div style={{ marginBottom: '1rem' }}>
           <label htmlFor="auth-username" style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: '0.4rem', fontWeight: 700 }}>Username</label>

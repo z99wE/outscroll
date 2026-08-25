@@ -160,6 +160,71 @@ function clearLoginAttempts(identifier) {
   loginAttempts.delete(identifier);
 }
 
+// ========== ANTI-BOT HELPERS ==========
+const signupTimestamps = new Map(); // Track form submission times
+const MIN_FORM_TIME_MS = 3000; // Minimum 3 seconds to fill signup form
+
+function checkAntiBot(req, res, next) {
+  // 1. Honeypot field check — bots fill hidden fields
+  const honeypot = req.body._website || req.body._company || req.body._fax;
+  if (honeypot) {
+    console.log(`[BOT BLOCKED] Honeypot filled from ${req.ip}`);
+    return res.status(400).json({ error: 'Invalid request' });
+  }
+
+  // 2. Time-based check — bots submit too fast
+  const formStarted = req.headers['x-form-start'];
+  if (formStarted) {
+    const elapsed = Date.now() - parseInt(formStarted, 10);
+    if (elapsed < MIN_FORM_TIME_MS) {
+      console.log(`[BOT BLOCKED] Form submitted in ${elapsed}ms from ${req.ip}`);
+      return res.status(400).json({ error: 'Please take your time filling out the form' });
+    }
+  }
+
+  // 3. Missing or suspicious User-Agent
+  const ua = req.headers['user-agent'] || '';
+  if (!ua || ua.length < 10 || /bot|crawler|spider|scraper|curl|wget|python/i.test(ua)) {
+    console.log(`[BOT BLOCKED] Suspicious User-Agent: ${ua} from ${req.ip}`);
+    return res.status(403).json({ error: 'Access denied' });
+  }
+
+  // 4. Check for required browser headers (bots often miss these)
+  if (!req.headers['accept-language'] || !req.headers['accept-encoding']) {
+    console.log(`[BOT BLOCKED] Missing browser headers from ${req.ip}`);
+    return res.status(403).json({ error: 'Access denied' });
+  }
+
+  next();
+}
+
+// Track engagement patterns for anomaly detection
+const engagementTracker = new Map(); // userId -> [{action, timestamp}]
+const MAX_ACTIONS_PER_MINUTE = 10;
+const MAX_ACTIONS_PER_HOUR = 100;
+
+function checkEngagementAnomaly(userId) {
+  const now = Date.now();
+  const actions = engagementTracker.get(userId) || [];
+  
+  // Clean old entries
+  const recent = actions.filter(a => now - a.timestamp < 3600000);
+  engagementTracker.set(userId, recent);
+
+  // Check per-minute rate
+  const lastMinute = recent.filter(a => now - a.timestamp < 60000);
+  if (lastMinute.length >= MAX_ACTIONS_PER_MINUTE) {
+    return { blocked: true, reason: 'Too many actions per minute' };
+  }
+
+  // Check per-hour rate
+  if (recent.length >= MAX_ACTIONS_PER_HOUR) {
+    return { blocked: true, reason: 'Too many actions per hour' };
+  }
+
+  return { blocked: false };
+}
+
 // ========== AUTH MIDDLEWARE ==========
 function authenticate(req, res, next) {
   const token = req.headers.authorization?.split(' ')[1];
@@ -187,7 +252,7 @@ app.get('/api/health', async (req, res) => {
 });
 
 // ========== SIGNUP ==========
-app.post('/api/auth/signup', authLimiter, async (req, res) => {
+app.post('/api/auth/signup', authLimiter, checkAntiBot, async (req, res) => {
   const { email, username, password, business_name, business_website, business_description } = req.body;
 
   if (!email || !username || !password) {
@@ -332,7 +397,7 @@ app.get('/api/videos/feed', async (req, res) => {
 });
 
 // ========== SUBMIT VIDEO ==========
-app.post('/api/videos/submit', authenticate, submitLimiter, async (req, res) => {
+app.post('/api/videos/submit', authenticate, submitLimiter, checkAntiBot, async (req, res) => {
   const { url } = req.body;
   const user_id = req.user.id;
 
@@ -417,6 +482,17 @@ app.post('/api/engagement/track', authenticate, trackLimiter, async (req, res) =
 
   if (!(action in pointsMap)) return res.status(400).json({ error: 'Invalid action' });
   if (!video_id) return res.status(400).json({ error: 'video_id is required' });
+
+  // Anti-bot: check engagement pattern anomaly
+  const anomaly = checkEngagementAnomaly(user_id);
+  if (anomaly.blocked) {
+    console.log(`[BOT BLOCKED] ${anomaly.reason} for user ${user_id}`);
+    return res.status(429).json({ error: anomaly.reason });
+  }
+  // Record this action
+  const userActions = engagementTracker.get(user_id) || [];
+  userActions.push({ action, timestamp: Date.now() });
+  engagementTracker.set(user_id, userActions);
 
   const points = pointsMap[action];
   const client = await pool.connect();
