@@ -86,7 +86,7 @@ export default function DataRightsPage({ user, onLogout }) {
         onLogout();
       }, 3000);
     } catch (err) {
-      setMessage({ type: 'error', text: err.response?.data?.error || 'Failed to delete account. Please contact grievance@outscroll.com' });
+      setMessage({ type: 'error', text: err.response?.data?.error || 'Failed to delete account. Please use the Contact page.' });
       setDeleting(false);
     }
   }, [confirmText, authHeaders, onLogout]);
@@ -100,7 +100,7 @@ export default function DataRightsPage({ user, onLogout }) {
             Sign in to access your data rights under DPDP & GDPR.
           </p>
           <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-            You can also contact our Grievance Officer at grievance@outscroll.com
+            You can also use the Contact page for data-related requests.
           </p>
         </div>
       </div>
@@ -241,11 +241,11 @@ export default function DataRightsPage({ user, onLogout }) {
         )}
       </div>
 
-      {/* Grievance Officer */}
+      {/* Contact */}
       <div className="card-inset" style={{ padding: '1.25rem', marginTop: '1.5rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-        <strong style={{ color: 'var(--text-secondary)' }}>Need help?</strong> Contact our Grievance Officer at{' '}
-        <span style={{ color: 'var(--accent)' }}>grievance@outscroll.com</span> for any data-related requests.
-        We respond within 30 days as required by law.
+        <strong style={{ color: 'var(--text-secondary)' }}>Need help?</strong> Use the{' '}
+        <button onClick={() => window.dispatchEvent(new CustomEvent('outscroll-navigate', { detail: 'contact' }))} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.8rem', padding: 0, textDecoration: 'underline' }}>Contact page</button>{' '}
+        for any data-related requests. We respond within 30 days as required by law.
       </div>
     </div>
   );

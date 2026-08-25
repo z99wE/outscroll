@@ -1232,6 +1232,70 @@ app.post('/api/videos/report', authenticate, async (req, res) => {
   }
 });
 
+// ========== CONTACT FORM ==========
+app.post('/api/contact', async (req, res) => {
+  const { name, email, subject, message } = req.body;
+  if (!name || !subject || !message) {
+    return res.status(400).json({ error: 'Name, subject, and message are required' });
+  }
+  if (name.length > 100 || subject.length > 200 || message.length > 2000) {
+    return res.status(400).json({ error: 'Input too long' });
+  }
+  try {
+    await pool.query(
+      `CREATE TABLE IF NOT EXISTS contact_messages (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        name VARCHAR(100) NOT NULL,
+        email VARCHAR(255),
+        subject VARCHAR(200) NOT NULL,
+        message TEXT NOT NULL,
+        user_id UUID REFERENCES users(id),
+        read BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT NOW()
+      )`
+    );
+    const userId = req.headers.authorization?.split(' ')[1];
+    let parsedUser = null;
+    if (userId) {
+      try { parsedUser = jwt.verify(userId, JWT_SECRET); } catch {}
+    }
+    await pool.query(
+      'INSERT INTO contact_messages (name, email, subject, message, user_id) VALUES ($1, $2, $3, $4, $5)',
+      [name.trim(), email?.trim() || null, subject.trim(), message.trim(), parsedUser?.id || null]
+    );
+    console.log(`[CONTACT] ${name} (${email || 'no email'}): ${subject}`);
+    res.json({ success: true, message: 'Message received. We will get back to you within 72 hours.' });
+  } catch (err) {
+    console.error('Contact form error:', err);
+    res.status(500).json({ error: 'Failed to send message' });
+  }
+});
+
+// Admin: list contact messages
+app.get('/api/admin/contacts', adminOnly, async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT id, name, email, subject, message, user_id, read, created_at FROM contact_messages ORDER BY created_at DESC LIMIT 50'
+    );
+    res.json({ messages: result.rows });
+  } catch (err) {
+    console.error('Contact list error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Admin: mark contact as read
+app.put('/api/admin/contacts/read', adminOnly, async (req, res) => {
+  const { id } = req.body;
+  try {
+    await pool.query('UPDATE contact_messages SET read = TRUE WHERE id = $1', [id]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Contact read error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // ========== CONTENT POLICY ==========
 app.get('/api/content-policy', (req, res) => {
   res.json({

@@ -9,6 +9,7 @@ import BusinessApprovalPage from './BusinessApprovalPage.jsx';
 import AdminPage from './AdminPage.jsx';
 import CookieConsent from './CookieConsent.jsx';
 import DataRightsPage from './DataRightsPage.jsx';
+import ContactPage from './ContactPage.jsx';
 import PWAInstallBanner from './PWAInstallBanner.jsx';
 
 // ========== Error Boundary ==========
@@ -1052,6 +1053,7 @@ export default function App() {
           {page === 'legacy' && <LegacyDisclaimerPage />}
           {page === 'business' && user && <BusinessApprovalPage />}
           {page === 'data-rights' && <DataRightsPage user={user} onLogout={handleLogout} />}
+          {page === 'contact' && <ContactPage user={user} />}
           {page === 'admin' && <AdminPage />}
         </main>
 
@@ -1069,6 +1071,8 @@ export default function App() {
               { id: 'terms', label: 'Terms' },
               { id: 'legacy', label: 'Disclaimer' },
               { id: 'data-rights', label: 'My Data' },
+              { id: 'contact', label: 'Contact' },
+              { id: 'contact', label: 'Contact' },
             ].map(link => (
               <button key={link.id} onClick={() => setPage(link.id)}
                 style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.75rem' }}

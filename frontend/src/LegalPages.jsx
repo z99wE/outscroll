@@ -59,7 +59,7 @@ export function FAQPage() {
     },
     {
       q: 'How do I contact support?',
-      a: 'Email our Grievance Officer at grievance@outscroll.com. For DPDP/GDPR data requests, use the same contact.',
+      a: 'Use the Contact page to reach us. For DPDP/GDPR data requests, select the appropriate subject.',
     },
     {
       q: 'How long is my data kept?',
@@ -185,7 +185,7 @@ export function ContentPolicyPage() {
         <h3 style={{ fontSize: '1rem', marginBottom: '1rem' }}>Reporting & Enforcement</h3>
         <div style={sectionStyle}>
           <p style={{ marginBottom: '0.75rem' }}>
-            <strong>How to report:</strong> If you encounter content that violates this policy, contact our Grievance Officer at grievance@outscroll.com with a description of the violation.
+            <strong>How to report:</strong> If you encounter content that violates this policy, use the Report button on the video or contact us through the Contact page.
           </p>
           <p style={{ marginBottom: '0.75rem' }}>
             <strong>Response time:</strong> All reports are reviewed within 24 hours.
@@ -223,7 +223,7 @@ export function PrivacyPolicyPage() {
           <strong style={{ color: 'var(--text-secondary)' }}>Data Fiduciary:</strong> OutScroll ("we", "us", "our") is the Data Fiduciary as defined under the Digital Personal Data Protection Act, 2023 (India).
         </p>
         <p>
-          <strong style={{ color: 'var(--text-secondary)' }}>Data Protection Officer:</strong> For any queries regarding this Privacy Policy or your personal data, contact our Grievance Officer at <strong style={{ color: 'var(--accent)' }}>grievance@outscroll.com</strong>.
+          <strong style={{ color: 'var(--text-secondary)' }}>Data Protection:</strong> For any queries regarding this Privacy Policy or your personal data, use the Contact page.
         </p>
       </div>
 
@@ -312,11 +312,11 @@ export function PrivacyPolicyPage() {
             <li><strong>Right to Erasure (DPDP §6, GDPR Art.17):</strong> Request deletion of your account and all associated personal data</li>
             <li><strong>Right to Data Portability (GDPR Art.20):</strong> Request your data in a structured, machine-readable format</li>
             <li><strong>Right to Withdraw Consent (DPDP §6, GDPR Art.7):</strong> Withdraw consent at any time (account deletion)</li>
-            <li><strong>Right to Grievance Redressal (DPDP §8):</strong> File a complaint with our Grievance Officer if your rights are violated</li>
+            <li><strong>Right to Grievance Redressal (DPDP §8):</strong> File a complaint through the Contact page if your rights are violated</li>
             <li><strong>Right to Nominate (DPDP §6(1)):</strong> Nominate a person to exercise your rights in case of death or incapacity</li>
           </ul>
           <p style={{ marginTop: '0.75rem' }}>
-            <strong>To exercise your rights:</strong> Contact our Grievance Officer at grievance@outscroll.com. All requests are processed within <strong>30 days</strong> as required by law.
+            <strong>To exercise your rights:</strong> Use the Contact page. All requests are processed within <strong>30 days</strong> as required by law.
           </p>
         </section>
 
@@ -358,7 +358,7 @@ export function PrivacyPolicyPage() {
         <section>
           <h3 style={h3Style}>11. Children's Privacy</h3>
           <p>
-            OutScroll is not intended for users under 18 years of age. We do not knowingly collect personal data from children. If you believe a child has provided us with personal data, contact our Grievance Officer immediately and we will delete it within 48 hours.
+            OutScroll is not intended for users under 18 years of age. We do not knowingly collect personal data from children. If you believe a child has provided us with personal data, contact us through the Contact page and we will delete it within 48 hours.
           </p>
         </section>
 
@@ -370,10 +370,10 @@ export function PrivacyPolicyPage() {
         </section>
 
         <section>
-          <h3 style={h3Style}>13. Grievance Officer (DPDP §8(9))</h3>
+          <h3 style={h3Style}>13. Data Protection Contact (DPDP §8(9))</h3>
           <p>For any privacy-related queries, data requests, or complaints:</p>
           <ul style={ulStyle}>
-            <li><strong>Email:</strong> grievance@outscroll.com</li>
+            <li><strong>Contact:</strong> Use the Contact page on the platform</li>
             <li><strong>Response time:</strong> Within 72 hours for acknowledgment, 30 days for resolution</li>
             <li><strong>Escalation:</strong> If unresolved, you may file a complaint with the Data Protection Board of India (DPB) or the relevant EU supervisory authority</li>
           </ul>
@@ -492,7 +492,7 @@ export function TermsPage() {
           <h3 style={h3Style}>10. Dispute Resolution</h3>
           <p>Any disputes arising from these Terms shall be resolved through:</p>
           <ul style={ulStyle}>
-            <li><strong>Informal resolution:</strong> Contact us first at grievance@outscroll.com</li>
+            <li><strong>Informal resolution:</strong> Contact us through the Contact page first</li>
             <li><strong>Mediation:</strong> If informal resolution fails, we agree to mediate before any legal proceedings</li>
             <li><strong>Governing law:</strong> These Terms are governed by the laws of India</li>
             <li><strong>Jurisdiction:</strong> Exclusive jurisdiction of courts in New Delhi, India</li>
@@ -553,7 +553,7 @@ export function LegacyDisclaimerPage() {
 
         <section>
           <h3 style={h3Style}>No Financial Transactions</h3>
-          <p>OutScroll is completely free. No payments are required, accepted, or processed through the Platform. Any third party claiming to sell OutScroll rankings, positions, or access is fraudulent and not affiliated with us. Report such attempts to grievance@outscroll.com.</p>
+          <p>OutScroll is completely free. No payments are required, accepted, or processed through the Platform. Any third party claiming to sell OutScroll rankings, positions, or access is fraudulent and not affiliated with us. Report such attempts through the Contact page.</p>
         </section>
 
         <section>
@@ -578,7 +578,7 @@ export function LegacyDisclaimerPage() {
 
         <section>
           <h3 style={h3Style}>Contact</h3>
-          <p>For any questions about this Disclaimer, contact our Grievance Officer at grievance@outscroll.com.</p>
+          <p>For any questions about this Disclaimer, use the Contact page.</p>
         </section>
       </div>
     </div>

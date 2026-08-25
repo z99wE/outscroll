@@ -10,6 +10,7 @@ export default function AdminPage() {
   const [allUsers, setAllUsers] = useState([]);
   const [recentVideos, setRecentVideos] = useState([]);
   const [stats, setStats] = useState(null);
+  const [contacts, setContacts] = useState([]);
   const [activeTab, setActiveTab] = useState('pending');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
@@ -27,6 +28,7 @@ export default function AdminPage() {
       fetchPending();
       fetchAllUsers();
       fetchVideos();
+      fetchContacts();
     } catch {
       setMessage({ type: 'error', text: 'Invalid admin key' });
     }
@@ -62,6 +64,13 @@ export default function AdminPage() {
     try {
       const res = await axios.get(`${API}/admin/stats`, { headers });
       setStats(res.data);
+    } catch {}
+  }, [headers]);
+
+  const fetchContacts = useCallback(async () => {
+    try {
+      const res = await axios.get(`${API}/admin/contacts`, { headers });
+      setContacts(res.data.messages);
     } catch {}
   }, [headers]);
 
@@ -160,6 +169,7 @@ export default function AdminPage() {
         {[
           { id: 'pending', label: `Pending (${pending.length})` },
           { id: 'videos', label: `Recent videos (${recentVideos.length})` },
+          { id: 'contacts', label: `Messages (${contacts.filter(c => !c.read).length})` },
           { id: 'all', label: 'All users' },
         ].map(tab => (
           <button
@@ -285,6 +295,43 @@ export default function AdminPage() {
                 </div>
               );
             })
+          )}
+        </div>
+      )}
+
+      {/* Contact messages */}
+      {activeTab === 'contacts' && (
+        <div style={{ display: 'grid', gap: '1rem' }}>
+          {contacts.length === 0 ? (
+            <div className="card-inset" style={{ padding: '3rem', textAlign: 'center' }}>
+              <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📭</div>
+              <p style={{ color: 'var(--text-secondary)' }}>No messages yet</p>
+            </div>
+          ) : (
+            contacts.map(msg => (
+              <div key={msg.id} className="card" style={{ padding: '1.25rem', borderLeft: msg.read ? '3px solid var(--border)' : '3px solid var(--accent)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+                  <div>
+                    <strong style={{ color: 'var(--text-heading)' }}>{msg.name}</strong>
+                    {msg.email && <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginLeft: '0.5rem' }}>({msg.email})</span>}
+                    {!msg.read && <span style={{ fontSize: '0.65rem', color: 'var(--accent)', marginLeft: '0.5rem', fontWeight: 700 }}>NEW</span>}
+                  </div>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{new Date(msg.created_at).toLocaleDateString()}</span>
+                </div>
+                <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>{msg.subject}</div>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>{msg.message}</p>
+                {!msg.read && (
+                  <button
+                    className="btn btn-ghost"
+                    style={{ fontSize: '0.7rem', marginTop: '0.75rem' }}
+                    onClick={async () => {
+                      await axios.put(`${API}/admin/contacts/read`, { id: msg.id }, { headers });
+                      setContacts(prev => prev.map(c => c.id === msg.id ? { ...c, read: true } : c));
+                    }}
+                  >Mark as read</button>
+                )}
+              </div>
+            ))
           )}
         </div>
       )}

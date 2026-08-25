@@ -70,6 +70,19 @@ CREATE INDEX idx_engagements_user ON engagements(user_id);
 CREATE INDEX idx_engagements_video ON engagements(video_id);
 CREATE INDEX idx_notifications_user ON notifications(user_id, read, created_at DESC);
 
+CREATE TABLE IF NOT EXISTS contact_messages (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name VARCHAR(100) NOT NULL,
+  email VARCHAR(255),
+  subject VARCHAR(200) NOT NULL,
+  message TEXT NOT NULL,
+  user_id UUID REFERENCES users(id),
+  read BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX idx_contact_read ON contact_messages(read, created_at DESC);
+
 -- ========== DATA RETENTION POLICY ==========
 -- Videos older than 90 days are purged to keep the DB under 500MB.
 -- Engagements older than 90 days are purged similarly.
