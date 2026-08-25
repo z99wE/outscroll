@@ -86,7 +86,7 @@ function AnimatedDemoScreens() {
         <div key={i} style={{ background: 'white', border: '2px solid #1a1a1a', padding: '0.5rem', marginBottom: '0.5rem', borderRadius: '4px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
             <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: ['#005eb8', '#e94e33', '#008f4c'][i-1], display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.5rem', color: 'white' }}>
-              {['♪', '◎', '▶'][i-1]}
+              {['TikTok', 'Instagram', 'YouTube'][i-1]}
             </div>
             <div>
               <div style={{ fontSize: '0.65rem', fontWeight: 700, color: '#1a1a1a' }}>biz_{i}</div>
@@ -94,7 +94,7 @@ function AnimatedDemoScreens() {
             </div>
           </div>
           <div style={{ background: '#f5f1eb', border: '1px solid #e0dcd6', padding: '0.3rem', textAlign: 'center', fontSize: '0.6rem', fontWeight: 600, color: '#005eb8', borderRadius: '3px' }}>
-            ▶ Watch
+            Watch
           </div>
         </div>
       ))}
@@ -103,7 +103,7 @@ function AnimatedDemoScreens() {
       <div style={{ fontFamily: "'Anton', sans-serif", fontSize: '1.1rem', marginBottom: '0.5rem', color: 'var(--text-heading)' }}>Watching...</div>
       <div style={{ background: 'white', border: '2px solid #1a1a1a', padding: '0.5rem', marginBottom: '0.5rem', borderRadius: '4px' }}>
         <div style={{ background: '#f5f1eb', border: '1px solid #e0dcd6', height: '100px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', borderRadius: '3px' }}>
-          <span style={{ fontSize: '1.5rem' }}>▶</span>
+          <span style={{ fontFamily: "'Anton', sans-serif", fontSize: '0.85rem' }}>Play</span>
           <div style={{ position: 'absolute', bottom: 0, left: 0, height: '3px', background: '#008f4c', width: '65%', animation: 'progressBar 3s ease-in-out infinite', borderRadius: '0 0 3px 3px' }} />
         </div>
         <div style={{ textAlign: 'center', marginTop: '0.4rem' }}>
@@ -120,9 +120,9 @@ function AnimatedDemoScreens() {
       <div style={{ fontFamily: "'Anton', sans-serif", fontSize: '1.1rem', marginBottom: '0.75rem', color: 'var(--text-heading)' }}>Leaderboard</div>
       <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '0.75rem' }}>
         {[
-          { rank: '🥈', name: 'alice', pts: '2.3K', mt: '0.75rem', border: '#e0dcd6' },
-          { rank: '🥇', name: 'you!', pts: '3.1K', mt: 0, border: '#c8960c' },
-          { rank: '🥉', name: 'bob', pts: '1.8K', mt: '1rem', border: '#e0dcd6' },
+          { rank: '#2', name: 'alice', pts: '2.3K', mt: '0.75rem', border: '#e0dcd6', color: '#999' },
+          { rank: '#1', name: 'you!', pts: '3.1K', mt: 0, border: '#c8960c', color: '#c8960c' },
+          { rank: '#3', name: 'bob', pts: '1.8K', mt: '1rem', border: '#e0dcd6', color: '#999' },
         ].map((p, i) => (
           <div key={i} style={{ flex: 1, padding: '0.4rem', textAlign: 'center', marginTop: p.mt, border: `2px solid ${p.border}`, background: 'white', borderRadius: '4px' }}>
             <div style={{ fontSize: '0.9rem' }}>{p.rank}</div>
@@ -132,7 +132,7 @@ function AnimatedDemoScreens() {
         ))}
       </div>
       <div style={{ background: '#e94e33', border: '2px solid #1a1a1a', padding: '0.5rem', color: 'white', fontSize: '0.65rem', fontWeight: 700, display: 'flex', justifyContent: 'space-between', borderRadius: '4px' }}>
-        <span>You climbed to #1!</span><span>🎉</span>
+        <span style={{ fontWeight: 700 }}>You climbed to #1!</span>
       </div>
     </div>,
   ];
@@ -192,8 +192,18 @@ export default function LandingPage({ onEnter }) {
           </div>
         </div>
 
-        {/* Diamond Logo */}
+        {/* Diamond Logo with shifting color background */}
         <div style={{ display: 'flex', justifyContent: 'center', marginTop: '4rem', marginBottom: '6rem', position: 'relative' }}>
+          {/* Shifting color background — sits BEHIND the logo box */}
+          <div style={{
+            position: 'absolute', width: '480px', height: '220px', top: '-20px', left: '50%', transform: 'translateX(-50%)',
+            background: 'linear-gradient(135deg, #005eb8, #e94e33, #fdb913, #008f4c)',
+            backgroundSize: '400% 400%',
+            animation: 'brandShift 8s ease infinite',
+            borderRadius: '8px', opacity: 0.9,
+          }} />
+          <style>{`@keyframes brandShift { 0%,100% { background-position: 0% 50% } 25% { background-position: 100% 0% } 50% { background-position: 100% 100% } 75% { background-position: 0% 100% } }`}</style>
+          {/* Logo box — sits ON TOP of the color background */}
           <div style={{
             width: '420px', height: '180px', border: '2px solid #e94e33', position: 'relative',
             background: '#f5f1eb', zIndex: 10, boxShadow: '10px 10px 0px rgba(233,78,51,0.2)',
@@ -206,7 +216,9 @@ export default function LandingPage({ onEnter }) {
             <div style={{ position: 'absolute', inset: '4px', border: '1px solid #e94e33', transform: 'rotate(1deg)', opacity: 0.15 }} />
             <div style={{ position: 'absolute', inset: '4px', border: '1px solid #e94e33', transform: 'rotate(-1deg)', opacity: 0.15 }} />
             <div style={{ textAlign: 'center' }}>
-              <img src="/logo.svg" alt="OutScroll — Climb the Ladder" style={{ width: '320px', maxWidth: '90%', height: 'auto' }} />
+              <span style={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.4em', background: '#e94e33', color: '#f5f1eb', padding: '0.2rem 0.5rem', display: 'inline-block', marginBottom: '0.5rem' }}>Free engagement leaderboard</span>
+              <h1 style={{ fontFamily: "'Anton', sans-serif", fontSize: '4rem', color: '#e94e33', letterSpacing: '-0.02em', lineHeight: 1, textShadow: '2px 2px 0px rgba(0,0,0,0.06)' }}>OUTSCROLL</h1>
+              <div style={{ fontFamily: "'Anton', sans-serif", fontSize: '1rem', color: '#1a1a1a', letterSpacing: '0.1em', marginTop: '0.25rem' }}>CLIMB THE LADDER</div>
             </div>
           </div>
         </div>
@@ -236,10 +248,10 @@ export default function LandingPage({ onEnter }) {
           {/* 4-Step Cards Grid */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: '1.5rem' }}>
             {[
-              { step: '01', title: 'Submit Business', desc: 'Sign up, submit your website. We verify you are a real business.', icon: '🏢', color: '#005eb8' },
-              { step: '02', title: 'Get Approved', desc: 'Once reviewed, your profile goes live. You can now post video ads.', icon: '✅', color: '#008f4c' },
-              { step: '03', title: 'Post & Watch', desc: 'Post one Reel/Short/TikTok per day. Watch others to earn points.', icon: '📱', color: '#e94e33' },
-              { step: '04', title: 'Climb the Ladder', desc: 'Your engagement score ranks you. #1 has watched the most content.', icon: '🏆', color: '#c8960c' },
+              { step: '01', title: 'Submit Business', desc: 'Sign up, submit your website. We verify you are a real business.', color: '#005eb8' },
+              { step: '02', title: 'Get Approved', desc: 'Once reviewed, your profile goes live. You can now post video ads.', color: '#008f4c' },
+              { step: '03', title: 'Post & Watch', desc: 'Post one Reel/Short/TikTok per day. Watch others to earn points.', color: '#e94e33' },
+              { step: '04', title: 'Climb the Ladder', desc: 'Your engagement score ranks you. #1 has watched the most content.', color: '#c8960c' },
             ].map((item, i) => (
               <ScrollReveal key={item.step} delay={i * 0.1}>
                 <div style={{
@@ -252,8 +264,8 @@ export default function LandingPage({ onEnter }) {
                   onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}
                 >
                   <div style={{ position: 'absolute', top: '-0.25rem', right: '0.75rem', fontFamily: "'Anton', sans-serif", fontSize: '4rem', color: item.color, opacity: 0.08, lineHeight: 1 }}>{item.step}</div>
-                  <div style={{ fontSize: '1.75rem', marginBottom: '0.75rem' }}>{item.icon}</div>
-                  <h3 style={{ fontFamily: "'Anton', sans-serif", fontSize: '1.25rem', color: '#1a1a1a', marginBottom: '0.5rem',  }}>{item.title}</h3>
+                  <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: item.color, color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Anton', sans-serif", fontSize: '0.85rem', marginBottom: '0.75rem' }}>{item.step}</div>
+                  <h3 style={{ fontFamily: "'Anton', sans-serif", fontSize: '1.25rem', color: '#1a1a1a', marginBottom: '0.5rem' }}>{item.title}</h3>
                   <p style={{ color: '#666', fontSize: '0.9rem', lineHeight: 1.5 }}>{item.desc}</p>
                 </div>
               </ScrollReveal>
@@ -298,7 +310,7 @@ export default function LandingPage({ onEnter }) {
                     <AnimatedDemoScreens />
                   </div>
                   <div style={{ position: 'absolute', top: '-12px', right: '-12px', width: '36px', height: '36px', background: '#e94e33', borderRadius: '50%', border: '2px solid #1a1a1a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <span style={{ color: 'white', fontSize: '0.7rem' }}>★</span>
+                    <span style={{ color: 'white', fontSize: '0.6rem', fontWeight: 700 }}>STAR</span>
                   </div>
                 </div>
               </ScrollReveal>
@@ -314,7 +326,15 @@ export default function LandingPage({ onEnter }) {
               <p style={{ color: '#999', fontSize: '0.85rem', fontWeight: 600, letterSpacing: '0.05em', marginTop: '0.5rem' }}>Businesses posting. Entrepreneurs engaging.</p>
             </div>
           </ScrollReveal>
-          <div style={{ height: '350px', position: 'relative', zIndex: 2 }}>
+          <div style={{ height: '350px', position: 'relative', zIndex: 2, borderRadius: '8px', overflow: 'hidden' }}>
+            {/* Shifting brand color background behind the wall */}
+            <div style={{
+              position: 'absolute', inset: 0, zIndex: 0,
+              background: 'linear-gradient(135deg, #005eb8, #e94e33, #fdb913, #008f4c)',
+              backgroundSize: '400% 400%',
+              animation: 'brandShift 8s ease infinite',
+              opacity: 0.15,
+            }} />
             <DriftWall items={wallItems} columns={8} tileWidth={100} tileHeight={140} gap={4} speed={25} direction="up" tilt={12} parallax={0.7} depth={80} fade={0.5} overlayColor="#f5f1eb" pauseOnHover />
           </div>
         </section>
@@ -338,12 +358,12 @@ export default function LandingPage({ onEnter }) {
 
               <div style={{ flex: 1, padding: '1.5rem 2rem' }}>
                 {[
-                  { icon: '🏢', title: 'Verified businesses only', note: 'Every account is approved by our team. No spam, no bots, no fakes.' },
-                  { icon: '📱', title: 'Vertical video only', note: 'TikTok, Instagram Reels, YouTube Shorts. No landscape. No podcasts.' },
-                  { icon: '🏆', title: 'Engagement-based ranking', note: 'Your rank is determined by how much you watch others. Not followers. Not money.' },
-                  { icon: '⚡', title: '+100 points per full watch', note: '+5 play, +70 halfway, +100 full, -5 skip. Fair points. No gaming.' },
-                  { icon: '💰', title: '$0 forever', note: 'No premium tier. No pay-to-rank. No hidden fees. Ever.' },
-                  { icon: '📅', title: '1 video per day', note: 'Keeps the feed fresh. Prevents spam. Equal opportunity for all.' },
+                  { title: 'Verified businesses only', note: 'Every account is approved. No spam, no bots, no fakes.' },
+                  { title: 'Vertical video only', note: 'TikTok, Instagram Reels, YouTube Shorts. No landscape. No podcasts.' },
+                  { title: 'Engagement-based ranking', note: 'Your rank is determined by how much you watch others. Not followers. Not money.' },
+                  { title: '+100 points per full watch', note: '+5 play, +70 halfway, +100 full, -5 skip. Fair points. No gaming.' },
+                  { title: '$0 forever', note: 'No premium tier. No pay-to-rank. No hidden fees. Ever.' },
+                  { title: '1 video per day', note: 'Keeps the feed fresh. Prevents spam. Equal opportunity for all.' },
                 ].map((item, i) => (
                   <ScrollReveal key={item.title} delay={i * 0.08}>
                     <div style={{
@@ -356,7 +376,7 @@ export default function LandingPage({ onEnter }) {
                       onMouseLeave={e => e.currentTarget.style.transform = 'translateX(0)'}
                     >
                       <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.75rem' }}>
-                        <span style={{ fontSize: '1.1rem', flexShrink: 0 }}>{item.icon}</span>
+                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#008f4c', flexShrink: 0, marginTop: '0.3rem' }} />
                         <div>
                           <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#1a1a1a' }}>{item.title}</div>
                           <div style={{ fontSize: '0.75rem', color: '#999', marginTop: '0.15rem' }}>{item.note}</div>
@@ -517,7 +537,7 @@ export default function LandingPage({ onEnter }) {
           <div>Free Tier Available</div>
           <div style={{ marginTop: '0.5rem' }}>India · Worldwide</div>
         </div>
-        <div style={{ textAlign: 'center' }}>                <img src="/logo.svg" alt="OutScroll" style={{ width: '120px', height: 'auto', filter: 'invert(1) brightness(2)' }} />
+        <div style={{ textAlign: 'center' }}>                <div style={{ fontFamily: "'Anton', sans-serif", fontSize: '1.25rem', color: '#f5f1eb' }}>OUTSCROLL</div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>
           <div style={{ display: 'flex', gap: '1.5rem', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em' }}>

@@ -38,24 +38,24 @@ class ErrorBoundary extends Component {
 
 // ========== Helper: parse video URL ==========
 function parseVideoUrl(url) {
-  if (!url) return { platform: 'unknown', embedUrl: null, icon: '🔗' };
+  if (!url) return { platform: 'unknown', embedUrl: null };
   try {
     const u = new URL(url);
     if (u.hostname.includes('tiktok.com')) {
       const videoId = u.pathname.split('/').pop();
-      return { platform: 'tiktok', embedUrl: `https://www.tiktok.com/embed/v2/${videoId}`, icon: '♪' };
+      return { platform: 'tiktok', embedUrl: `https://www.tiktok.com/embed/v2/${videoId}` };
     }
     if (u.hostname.includes('instagram.com')) {
-      return { platform: 'instagram', embedUrl: `${u.href.endsWith('/') ? u.href : u.href + '/'}`, icon: '◎' };
+      return { platform: 'instagram', embedUrl: `${u.href.endsWith('/') ? u.href : u.href + '/'}` };
     }
     if (u.hostname.includes('youtube.com') || u.hostname.includes('youtu.be')) {
       let videoId;
       if (u.hostname.includes('youtu.be')) { videoId = u.pathname.slice(1); }
       else { videoId = u.searchParams.get('v'); }
-      return { platform: 'youtube', embedUrl: videoId ? `https://www.youtube.com/embed/${videoId}` : null, icon: '▶' };
+      return { platform: 'youtube', embedUrl: videoId ? `https://www.youtube.com/embed/${videoId}` : null };
     }
-    return { platform: 'unknown', embedUrl: null, icon: '🔗' };
-  } catch { return { platform: 'unknown', embedUrl: null, icon: '🔗' }; }
+    return { platform: 'unknown', embedUrl: null };
+  } catch { return { platform: 'unknown', embedUrl: null }; }
 }
 
 // ========== Skip to Content ==========
@@ -113,7 +113,7 @@ function Header({ page, setPage, user, onLogout, unreadCount = 0, onHome }) {
           style={{ cursor: 'pointer', background: 'none', border: 'none', fontFamily: 'inherit', fontSize: 'inherit', color: 'inherit' }}
           onClick={onHome}
           aria-label="OutScroll home"
-        ><img src="/favicon.svg" alt="" style={{ height: '24px', verticalAlign: 'middle' }} /> out<span>scroll</span></button>
+        >out<span>scroll</span></button>
 
         {/* Mobile hamburger */}
         <button
@@ -144,7 +144,7 @@ function Header({ page, setPage, user, onLogout, unreadCount = 0, onHome }) {
                 className="nav-item" style={{ position: 'relative' }}
                 aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}
               >
-                🔔
+                ♫
                 {unreadCount > 0 && (
                   <span style={{
                     position: 'absolute', top: '2px', right: '2px',
@@ -179,7 +179,7 @@ function Header({ page, setPage, user, onLogout, unreadCount = 0, onHome }) {
             <>
               <button className="nav-item" onClick={() => { setPage('notifications'); setMenuOpen(false); }}
                 style={{ width: '100%', textAlign: 'left' }}
-              >🔔 Notifications {unreadCount > 0 && `(${unreadCount})`}</button>
+              >Notifications {unreadCount > 0 && `(${unreadCount})`}</button>
               <button className="nav-item" onClick={() => { onLogout(); setMenuOpen(false); }}
                 style={{ width: '100%', textAlign: 'left', color: 'var(--danger)' }}
               >Log Out</button>
@@ -196,7 +196,7 @@ function VideoCard({ video, onTrack, user }) {
   const [embedded, setEmbedded] = useState(false);
   const [tracked, setTracked] = useState({});
   const [pointsEarned, setPointsEarned] = useState(null);
-  const { platform, embedUrl, icon } = useMemo(() => parseVideoUrl(video.url), [video.url]);
+  const { platform, embedUrl } = useMemo(() => parseVideoUrl(video.url), [video.url]);
   const pointsRef = useRef(null);
 
   const doTrack = useCallback(async (videoId, action) => {
@@ -252,7 +252,7 @@ function VideoCard({ video, onTrack, user }) {
             background: 'var(--surface-inset)', border: '1px solid var(--border)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: '1.1rem', flexShrink: 0,
-          }}>{icon}</div>
+          }}></div>
           <div>
             <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-heading)' }}>{video.username}</div>
             <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', letterSpacing: '0.05em' }}>
@@ -279,7 +279,7 @@ function VideoCard({ video, onTrack, user }) {
           cursor: 'pointer', background: 'var(--surface-inset)', border: '1px solid var(--border)',
           borderRadius: '6px',
         }} aria-label={`Play video by ${video.username} on ${platform}`}>
-          {icon} Watch on {platform}
+          Watch on {platform}
         </button>
       )}
 
@@ -288,7 +288,7 @@ function VideoCard({ video, onTrack, user }) {
         <button className={`btn ${tracked['play'] ? 'btn-primary' : 'btn-secondary'}`}
           onClick={handlePlay} style={{ padding: '0.5rem', fontSize: '0.7rem' }}
           disabled={tracked['play']} aria-pressed={tracked['play']}
-        >▶ Play (+5)</button>
+        >Play (+5)</button>
         <button className={`btn ${tracked['50_watch'] ? 'btn-success' : 'btn-secondary'}`}
           onClick={handle50} style={{ padding: '0.5rem', fontSize: '0.7rem' }}
           disabled={tracked['50_watch']} aria-pressed={tracked['50_watch']}
@@ -384,7 +384,7 @@ function FeedPage({ user, onTrack }) {
       <div>
         <h2 style={{ marginBottom: '1.5rem', fontSize: '1.75rem' }}>Feed</h2>
         <div className="card-inset" style={{ padding: '3rem', textAlign: 'center' }}>
-          <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>📭</div>
+          <div style={{ fontFamily: "'Anton', sans-serif", fontSize: '1.5rem', marginBottom: '1rem', color: 'var(--text-muted)' }}>Empty</div>
           <p style={{ color: 'var(--text-secondary)' }}>No videos yet. Be the first to post!</p>
         </div>
       </div>
@@ -436,13 +436,13 @@ function LeaderboardPage({ user, setPage }) {
 
   const getRankColor = (rank) => rank === 1 ? 'var(--gold)' : rank === 2 ? 'var(--silver)' : rank === 3 ? 'var(--bronze)' : 'var(--text-muted)';
   const getRankLabel = (rank) => rank === 1 ? '1st place' : rank === 2 ? '2nd place' : rank === 3 ? '3rd place' : `Rank ${rank}`;
-  const getRankEmoji = (rank) => rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : null;
+  const getRankBadge = (rank) => rank === 1 ? '#1' : rank === 2 ? '#2' : rank === 3 ? '#3' : null;
 
   const shareRank = useCallback((username, rank, points) => {
     if (navigator.share) {
-      navigator.share({ title: 'My OutScroll Rank', text: `🏆 I'm #${rank} on OutScroll with ${points.toLocaleString()} points!`, url: 'https://outscroll.com' });
+      navigator.share({ title: 'My OutScroll Rank', text: `I'm #${rank} on OutScroll with ${points.toLocaleString()} points!`, url: 'https://outscroll.com' });
     } else {
-      navigator.clipboard.writeText(`🏆 I'm #${rank} on OutScroll with ${points.toLocaleString()} points! https://outscroll.com`).then(() => alert('Copied to clipboard!'));
+      navigator.clipboard.writeText(`I'm #${rank} on OutScroll with ${points.toLocaleString()} points! https://outscroll.com`).then(() => alert('Copied to clipboard!'));
     }
   }, []);
 
@@ -450,7 +450,7 @@ function LeaderboardPage({ user, setPage }) {
     return (
       <div style={{ maxWidth: '480px', margin: '4rem auto', textAlign: 'center' }}>
         <div className="card" style={{ padding: '3rem 2rem' }}>
-          <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🏆</div>
+          <div style={{ fontFamily: "'Anton', sans-serif", fontSize: '2rem', marginBottom: '1rem', color: 'var(--accent)' }}>#1</div>
           <h2 style={{ marginBottom: '0.5rem', fontSize: '1.5rem' }}>Leaderboard</h2>
           <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem', fontSize: '0.9rem' }}>
             Sign in to see the full leaderboard and track your rank.
@@ -480,7 +480,7 @@ function LeaderboardPage({ user, setPage }) {
                   marginTop: idx === 1 ? '1rem' : idx === 2 ? '2rem' : 0,
                   border: isFirst ? '2px solid var(--gold)' : undefined,
                 }}>
-                <div style={{ fontSize: isFirst ? '2.5rem' : '2rem', marginBottom: '0.5rem' }}>{getRankEmoji(entry?.rank)}</div>
+                <div style={{ fontFamily: "'Anton', sans-serif", fontSize: isFirst ? '2.5rem' : '2rem', marginBottom: '0.5rem', color: getRankColor(entry?.rank) }}>{getRankBadge(entry?.rank)}</div>
                 <div style={{ fontWeight: 700, fontSize: isFirst ? '1.2rem' : '1rem', color: 'var(--text-heading)' }}>{entry?.username}</div>
                 <div style={{ fontFamily: "'Anton', sans-serif", fontSize: isFirst ? '2rem' : '1.5rem', color: getRankColor(entry?.rank) }}>
                   {entry?.total_points.toLocaleString()}
@@ -488,7 +488,7 @@ function LeaderboardPage({ user, setPage }) {
                 <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>points</div>
                 <button className="btn btn-ghost" style={{ fontSize: '0.65rem', padding: '0.3rem 0.6rem' }}
                   onClick={() => shareRank(entry?.username, entry?.rank, entry?.total_points)}
-                  aria-label={`Share ${getRankLabel(entry?.rank)} rank`}>📤 Share</button>
+                  aria-label={`Share ${getRankLabel(entry?.rank)} rank`}>Share</button>
               </div>
             );
           })}
@@ -506,7 +506,7 @@ function LeaderboardPage({ user, setPage }) {
             {leaderboard.map(entry => (
               <tr key={entry.username}>
                 <td><span aria-label={getRankLabel(entry.rank)} style={{ color: getRankColor(entry.rank) }}>
-                  {getRankEmoji(entry.rank) || `#${entry.rank}`}
+                  {getRankBadge(entry.rank) || `#${entry.rank}`}
                 </span></td>
                 <td style={{ fontWeight: 600, color: 'var(--text-heading)' }}>{entry.username}</td>
                 <td style={{ textAlign: 'right', fontFamily: "'Anton', sans-serif", fontSize: '1.05rem', color: entry.rank <= 3 ? getRankColor(entry.rank) : 'var(--text-heading)' }}>
@@ -639,24 +639,24 @@ function SubmitPage({ user }) {
   };
 
   const urlValidation = useMemo(() => {
-    if (!url) return { valid: null, platform: null, icon: null, error: null };
+    if (!url) return { valid: null, platform: null, error: null };
     try {
       const u = new URL(url);
       const host = u.hostname.replace(/^www\./, '');
       const path = u.pathname.toLowerCase();
       if (host === 'tiktok.com' || host.endsWith('.tiktok.com'))
-        return { valid: true, platform: 'TikTok', icon: '♪', error: null };
+        return { valid: true, platform: 'TikTok', error: null };
       if (host === 'instagram.com' && path.includes('/reel/'))
-        return { valid: true, platform: 'Instagram Reels', icon: '◎', error: null };
+        return { valid: true, platform: 'Instagram Reels', error: null };
       if ((host === 'youtube.com' || host === 'youtu.be') && (path.includes('/shorts/') || path === '/shorts'))
-        return { valid: true, platform: 'YouTube Shorts', icon: '▶', error: null };
+        return { valid: true, platform: 'YouTube Shorts', error: null };
       if (host === 'instagram.com')
-        return { valid: false, platform: 'Instagram', icon: '◎', error: 'Only Instagram Reels links are accepted (not regular posts or stories)' };
+        return { valid: false, platform: 'Instagram', error: 'Only Instagram Reels links are accepted (not regular posts or stories)' };
       if (host === 'youtube.com' || host === 'youtu.be')
-        return { valid: false, platform: 'YouTube', icon: '▶', error: 'Only YouTube Shorts links are accepted (not regular videos)' };
-      return { valid: false, platform: null, icon: null, error: 'Only TikTok, Instagram Reels, and YouTube Shorts links are allowed' };
+        return { valid: false, platform: 'YouTube', error: 'Only YouTube Shorts links are accepted (not regular videos)' };
+      return { valid: false, platform: null, error: 'Only TikTok, Instagram Reels, and YouTube Shorts links are allowed' };
     } catch {
-      return { valid: false, platform: null, icon: null, error: 'Enter a valid URL' };
+      return { valid: false, platform: null, error: 'Enter a valid URL' };
     }
   }, [url]);
 
@@ -683,7 +683,8 @@ function SubmitPage({ user }) {
               placeholder="https://www.tiktok.com/@creator/video/..." disabled={hasPostedToday}
               style={{ paddingRight: '3rem', borderColor: url && !urlValidation.valid ? 'var(--danger)' : undefined }}
               aria-describedby="submit-url-hint" />
-            {urlValidation.icon && <span aria-hidden="true" style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', fontSize: '1.1rem' }}>{urlValidation.icon}</span>}
+            {urlValidation.valid === true && <span aria-hidden="true" style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', fontSize: '0.75rem', color: 'var(--success)' }}>OK</span>}
+            {urlValidation.valid === false && <span aria-hidden="true" style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', fontSize: '0.75rem', color: 'var(--danger)' }}>NO</span>}
           </div>
           {url && urlValidation.valid === false && urlValidation.error && (
             <div style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: 'var(--danger)', fontWeight: 600 }} role="alert">
@@ -699,11 +700,11 @@ function SubmitPage({ user }) {
             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.4rem', fontWeight: 600 }}>Accepted platforms:</div>
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
               {[
-                { name: 'TikTok', icon: '♪' },
-                { name: 'Instagram Reels', icon: '◎' },
-                { name: 'YouTube Shorts', icon: '▶' },
+                { name: 'TikTok' },
+                { name: 'Instagram Reels' },
+                { name: 'YouTube Shorts' },
               ].map(p => (
-                <span key={p.name} className="badge badge-neutral">{p.icon} {p.name}</span>
+                <span key={p.name} className="badge badge-neutral">{p.name}</span>
               ))}
             </div>
           </div>
@@ -882,7 +883,7 @@ function NotificationsPage({ onMarkRead }) {
       <h2 style={{ marginBottom: '1.5rem', fontSize: '1.75rem' }}>Notifications</h2>
       {notifications.length === 0 ? (
         <div className="card-inset" style={{ padding: '3rem', textAlign: 'center' }}>
-          <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>🔔</div>
+          <div style={{ fontFamily: "'Anton', sans-serif", fontSize: '1.5rem', marginBottom: '1rem', color: 'var(--accent)' }}>Alerts</div>
           <p style={{ color: 'var(--text-secondary)' }}>No notifications yet. Post a video and watch the engagement roll in!</p>
         </div>
       ) : (
@@ -900,10 +901,10 @@ function NotificationsPage({ onMarkRead }) {
                   : 'var(--surface-inset)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem', flexShrink: 0,
                 color: notif.type === 'new_video' ? '#1a1a1a' : 'white',
-              }}>{notif.type === 'engagement' ? (notif.points > 0 ? '▶' : '⏭')
-                : notif.type === 'approval_update' ? '✓'
-                : notif.type === 'new_video' ? '🎬'
-                : '🔔'}</div>
+              }}>{notif.type === 'engagement' ? (notif.points > 0 ? '+' : '-')
+                : notif.type === 'approval_update' ? '!'
+                : notif.type === 'new_video' ? 'New'
+                : '...'}</div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-heading)' }}>{notif.message}</div>
                 <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
@@ -1061,7 +1062,7 @@ export default function App() {
           textAlign: 'center', padding: '3rem 1.5rem', color: 'var(--text-muted)',
           fontSize: '0.75rem', borderTop: '1px solid var(--border)', marginTop: '3rem',
         }}>
-          <img src="/logo.svg" alt="OutScroll" style={{ width: '100px', height: 'auto', opacity: 0.8 }} />
+          <span className="logo" style={{ fontSize: '1rem' }}>out<span>scroll</span></span>
           <div style={{ marginTop: '0.5rem', marginBottom: '1rem' }}>Free leaderboard for entrepreneurs · Post vertical ads · Climb by watching others</div>
           <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
             {[
