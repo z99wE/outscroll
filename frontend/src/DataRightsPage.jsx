@@ -94,7 +94,7 @@ export default function DataRightsPage({ user, onLogout }) {
   if (!user) {
     return (
       <div style={{ maxWidth: '500px', margin: '4rem auto', textAlign: 'center' }}>
-        <div className="neu-card" style={{ padding: '3rem 2rem' }}>
+        <div className="card" style={{ padding: '3rem 2rem' }}>
           <h2 style={{ marginBottom: '0.5rem', fontSize: '1.5rem' }}>Data Rights</h2>
           <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
             Sign in to access your data rights under DPDP & GDPR.
@@ -108,7 +108,7 @@ export default function DataRightsPage({ user, onLogout }) {
   }
 
   if (loading) {
-    return <div className="loading-pulse neu-card" style={{ height: '300px', margin: '2rem 0' }} role="status" aria-label="Loading data rights" />;
+    return <div className="loading-pulse" style={{ height: '300px', margin: '2rem 0' }} role="status" aria-label="Loading data rights" />;
   }
 
   return (
@@ -135,7 +135,7 @@ export default function DataRightsPage({ user, onLogout }) {
       )}
 
       {/* What data we hold */}
-      <div className="neu-card" style={{ padding: '1.5rem', marginBottom: '1.5rem' }}>
+      <div className="card" style={{ padding: '1.5rem', marginBottom: '1.5rem' }}>
         <h3 style={{ fontSize: '1rem', marginBottom: '1rem' }}>Your Data on OutScroll</h3>
         <div style={{ display: 'grid', gap: '0.5rem' }}>
           {[
@@ -148,7 +148,7 @@ export default function DataRightsPage({ user, onLogout }) {
             { label: 'Videos Posted', value: profile?.videos?.length || 0 },
             { label: 'Member Since', value: new Date(profile?.user?.created_at).toLocaleDateString() },
           ].map(item => (
-            <div key={item.label} className="neu-card-inset" style={{
+            <div key={item.label} className="card-inset" style={{
               padding: '0.6rem 0.875rem',
               display: 'flex',
               justifyContent: 'space-between',
@@ -166,14 +166,14 @@ export default function DataRightsPage({ user, onLogout }) {
       </div>
 
       {/* Export Data */}
-      <div className="neu-card" style={{ padding: '1.5rem', marginBottom: '1.5rem' }}>
+      <div className="card" style={{ padding: '1.5rem', marginBottom: '1.5rem' }}>
         <h3 style={{ fontSize: '1rem', marginBottom: '0.5rem' }}>Export Your Data</h3>
         <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
           Download all your personal data in JSON format. This includes your profile, videos posted, and notifications.
           Required under GDPR Art. 20 (Data Portability) and DPDP §6.
         </p>
         <button
-          className="neu-btn neu-btn-primary"
+          className="btn btn-primary"
           onClick={handleExport}
           disabled={exporting}
           style={{ padding: '0.75rem 1.5rem', fontSize: '0.8rem' }}
@@ -183,7 +183,7 @@ export default function DataRightsPage({ user, onLogout }) {
       </div>
 
       {/* Delete Account */}
-      <div className="neu-card" style={{ padding: '1.5rem', borderLeft: '3px solid var(--danger)' }}>
+      <div className="card" style={{ padding: '1.5rem', borderLeft: '3px solid var(--danger)' }}>
         <h3 style={{ fontSize: '1rem', marginBottom: '0.5rem', color: 'var(--danger)' }}>Delete Account</h3>
         <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
           Permanently delete your account and all associated personal data. This action is <strong>irreversible</strong>.
@@ -198,7 +198,7 @@ export default function DataRightsPage({ user, onLogout }) {
 
         {!confirmDelete ? (
           <button
-            className="neu-btn neu-btn-danger"
+            className="btn btn-danger"
             onClick={() => setConfirmDelete(true)}
             style={{ padding: '0.75rem 1.5rem', fontSize: '0.8rem' }}
           >
@@ -214,13 +214,13 @@ export default function DataRightsPage({ user, onLogout }) {
                 type="text"
                 value={confirmText}
                 onChange={e => setConfirmText(e.target.value)}
-                className="neu-input"
+                className="input"
                 style={{ flex: 1, padding: '0.75rem', fontSize: '0.85rem' }}
                 placeholder="Type DELETE"
                 autoFocus
               />
               <button
-                className="neu-btn neu-btn-danger"
+                className="btn btn-danger"
                 onClick={handleDelete}
                 disabled={confirmText !== 'DELETE' || deleting}
                 style={{ padding: '0.75rem 1.5rem', fontSize: '0.8rem' }}
@@ -242,7 +242,7 @@ export default function DataRightsPage({ user, onLogout }) {
       </div>
 
       {/* Grievance Officer */}
-      <div className="neu-card-inset" style={{ padding: '1.25rem', marginTop: '1.5rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+      <div className="card-inset" style={{ padding: '1.25rem', marginTop: '1.5rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
         <strong style={{ color: 'var(--text-secondary)' }}>Need help?</strong> Contact our Grievance Officer at{' '}
         <span style={{ color: 'var(--accent)' }}>grievance@outscroll.com</span> for any data-related requests.
         We respond within 30 days as required by law.

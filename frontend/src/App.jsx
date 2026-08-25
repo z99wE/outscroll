@@ -599,10 +599,26 @@ function SubmitPage({ user }) {
     finally { setLoading(false); }
   };
 
-  const platformHint = useMemo(() => {
-    if (!url) return null;
-    const { platform, icon } = parseVideoUrl(url);
-    return { platform, icon };
+  const urlValidation = useMemo(() => {
+    if (!url) return { valid: null, platform: null, icon: null, error: null };
+    try {
+      const u = new URL(url);
+      const host = u.hostname.replace(/^www\./, '');
+      const path = u.pathname.toLowerCase();
+      if (host === 'tiktok.com' || host.endsWith('.tiktok.com'))
+        return { valid: true, platform: 'TikTok', icon: '♪', error: null };
+      if (host === 'instagram.com' && path.includes('/reel/'))
+        return { valid: true, platform: 'Instagram Reels', icon: '◎', error: null };
+      if ((host === 'youtube.com' || host === 'youtu.be') && (path.includes('/shorts/') || path === '/shorts'))
+        return { valid: true, platform: 'YouTube Shorts', icon: '▶', error: null };
+      if (host === 'instagram.com')
+        return { valid: false, platform: 'Instagram', icon: '◎', error: 'Only Instagram Reels links are accepted (not regular posts or stories)' };
+      if (host === 'youtube.com' || host === 'youtu.be')
+        return { valid: false, platform: 'YouTube', icon: '▶', error: 'Only YouTube Shorts links are accepted (not regular videos)' };
+      return { valid: false, platform: null, icon: null, error: 'Only TikTok, Instagram Reels, and YouTube Shorts links are allowed' };
+    } catch {
+      return { valid: false, platform: null, icon: null, error: 'Enter a valid URL' };
+    }
   }, [url]);
 
   return (
@@ -626,13 +642,31 @@ function SubmitPage({ user }) {
           <div style={{ position: 'relative' }}>
             <input id="submit-url" type="url" value={url} onChange={e => setUrl(e.target.value)} required className="input"
               placeholder="https://www.tiktok.com/@creator/video/..." disabled={hasPostedToday}
-              style={{ paddingRight: '3rem' }} aria-describedby="submit-url-hint" />
-            {platformHint && <span aria-hidden="true" style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', fontSize: '1.1rem' }}>{platformHint.icon}</span>}
+              style={{ paddingRight: '3rem', borderColor: url && !urlValidation.valid ? 'var(--danger)' : undefined }}
+              aria-describedby="submit-url-hint" />
+            {urlValidation.icon && <span aria-hidden="true" style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', fontSize: '1.1rem' }}>{urlValidation.icon}</span>}
           </div>
-          <div id="submit-url-hint" style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-            {['TikTok', 'Reels', 'Shorts'].map(p => (
-              <span key={p} className="badge badge-neutral">{p}</span>
-            ))}
+          {url && urlValidation.valid === false && urlValidation.error && (
+            <div style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: 'var(--danger)', fontWeight: 600 }} role="alert">
+              {urlValidation.error}
+            </div>
+          )}
+          {url && urlValidation.valid === true && (
+            <div style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: 'var(--success)', fontWeight: 600 }} role="status">
+              ✓ Valid {urlValidation.platform} link
+            </div>
+          )}
+          <div id="submit-url-hint" style={{ marginTop: '0.75rem' }}>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.4rem', fontWeight: 600 }}>Accepted platforms:</div>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              {[
+                { name: 'TikTok', icon: '♪' },
+                { name: 'Instagram Reels', icon: '◎' },
+                { name: 'YouTube Shorts', icon: '▶' },
+              ].map(p => (
+                <span key={p.name} className="badge badge-neutral">{p.icon} {p.name}</span>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -643,7 +677,7 @@ function SubmitPage({ user }) {
           >{message.text}</div>
         )}
 
-        <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '0.875rem', marginTop: '1rem' }} disabled={loading || hasPostedToday} aria-busy={loading}>
+        <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '0.875rem', marginTop: '1rem' }} disabled={loading || hasPostedToday || (url && urlValidation.valid === false)} aria-busy={loading}>
           {loading ? 'Posting...' : 'Post Video'}
         </button>
       </form>

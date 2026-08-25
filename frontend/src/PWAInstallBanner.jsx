@@ -108,7 +108,7 @@ export default function PWAInstallBanner() {
         {platform !== 'ios' && (
           <button
             onClick={handleInstall}
-            className="neu-btn neu-btn-primary"
+            className="btn btn-primary"
             style={{ padding: '0.5rem 1rem', fontSize: '0.75rem', borderRadius: '6px' }}
           >
             Install

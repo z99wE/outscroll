@@ -60,7 +60,7 @@ export default function CookieConsent() {
       }}
     >
       <div
-        className="neu-card"
+        className="card"
         style={{
           maxWidth: '700px',
           margin: '0 auto',
@@ -119,14 +119,14 @@ export default function CookieConsent() {
 
         <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
           <button
-            className="neu-btn neu-btn-primary"
+            className="btn btn-primary"
             onClick={handleAcceptAll}
             style={{ padding: '0.6rem 1.25rem', fontSize: '0.75rem' }}
           >
             Accept All
           </button>
           <button
-            className="neu-btn"
+            className="btn btn-secondary"
             onClick={handleEssentialOnly}
             style={{ padding: '0.6rem 1.25rem', fontSize: '0.75rem' }}
           >

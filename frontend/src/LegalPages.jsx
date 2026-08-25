@@ -72,7 +72,7 @@ export function FAQPage() {
 
       <div style={{ display: 'grid', gap: '0.5rem' }}>
         {faqs.map((faq, i) => (
-          <div key={i} className="neu-card" style={{ overflow: 'hidden' }}>
+          <div key={i} className="card" style={{ overflow: 'hidden' }}>
             <button
               onClick={() => setOpenIndex(openIndex === i ? null : i)}
               style={{
@@ -126,7 +126,7 @@ export function ContentPolicyPage() {
         Last updated: August 23, 2026 · Applies to all content posted on OutScroll
       </p>
 
-      <div className="neu-card" style={{ padding: '2rem', marginBottom: '1.5rem' }}>
+      <div className="card" style={{ padding: '2rem', marginBottom: '1.5rem' }}>
         <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: 'var(--success)' }}>✓ Allowed Content</h3>
         <ul style={{ listStyle: 'none', padding: 0, display: 'grid', gap: '0.5rem' }}>
           {[
@@ -146,7 +146,7 @@ export function ContentPolicyPage() {
         </ul>
       </div>
 
-      <div className="neu-card" style={{ padding: '2rem', marginBottom: '1.5rem' }}>
+      <div className="card" style={{ padding: '2rem', marginBottom: '1.5rem' }}>
         <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: 'var(--danger)' }}>✗ Prohibited Content</h3>
         <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
           The following content is strictly prohibited and will result in immediate suspension:
@@ -177,7 +177,7 @@ export function ContentPolicyPage() {
         </ul>
       </div>
 
-      <div className="neu-card" style={{ padding: '2rem', marginBottom: '1.5rem' }}>
+      <div className="card" style={{ padding: '2rem', marginBottom: '1.5rem' }}>
         <h3 style={{ fontSize: '1rem', marginBottom: '1rem' }}>Reporting & Enforcement</h3>
         <div style={sectionStyle}>
           <p style={{ marginBottom: '0.75rem' }}>
@@ -198,7 +198,7 @@ export function ContentPolicyPage() {
         </div>
       </div>
 
-      <div className="neu-card-inset" style={{ padding: '1.25rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+      <div className="card-inset" style={{ padding: '1.25rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
         <strong style={{ color: 'var(--text-secondary)' }}>Note:</strong> OutScroll reserves the right to remove any content at its sole discretion if it determines the content violates the spirit of this policy, even if not explicitly listed above.
       </div>
     </div>
@@ -214,7 +214,7 @@ export function PrivacyPolicyPage() {
         Last updated: August 23, 2026 · Effective: August 23, 2026
       </p>
 
-      <div className="neu-card" style={{ padding: '2rem', marginBottom: '1.5rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+      <div className="card" style={{ padding: '2rem', marginBottom: '1.5rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
         <p style={{ marginBottom: '0.5rem' }}>
           <strong style={{ color: 'var(--text-secondary)' }}>Data Fiduciary:</strong> OutScroll ("we", "us", "our") is the Data Fiduciary as defined under the Digital Personal Data Protection Act, 2023 (India).
         </p>

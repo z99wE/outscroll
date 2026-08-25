@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
 
 const API = '/api';
@@ -8,10 +8,12 @@ export default function AdminPage() {
   const [authenticated, setAuthenticated] = useState(false);
   const [pending, setPending] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
+  const [recentVideos, setRecentVideos] = useState([]);
   const [stats, setStats] = useState(null);
   const [activeTab, setActiveTab] = useState('pending');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
+  const keyRef = useRef(null);
 
   const headers = { 'x-admin-key': adminKey };
 
@@ -24,13 +26,15 @@ export default function AdminPage() {
       localStorage.setItem('admin_key', adminKey);
       fetchPending();
       fetchAllUsers();
+      fetchVideos();
     } catch {
       setMessage({ type: 'error', text: 'Invalid admin key' });
     }
-  }, [adminKey, headers]);
+  }, [adminKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (adminKey) authenticate();
+    else if (keyRef.current) keyRef.current.focus();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchPending = useCallback(async () => {
@@ -44,6 +48,13 @@ export default function AdminPage() {
     try {
       const res = await axios.get(`${API}/admin/users`, { headers });
       setAllUsers(res.data.users);
+    } catch {}
+  }, [headers]);
+
+  const fetchVideos = useCallback(async () => {
+    try {
+      const res = await axios.get(`${API}/admin/videos`, { headers });
+      setRecentVideos(res.data.videos);
     } catch {}
   }, [headers]);
 
@@ -73,36 +84,40 @@ export default function AdminPage() {
     }
   };
 
+  const refreshAll = () => {
+    fetchStats();
+    fetchPending();
+    fetchAllUsers();
+    fetchVideos();
+  };
+
   // Login form
   if (!authenticated) {
     return (
       <div style={{ maxWidth: '400px', margin: '3rem auto' }}>
-        <h2 style={{ marginBottom: '0.5rem', fontSize: '1.5rem' }}>Admin Access</h2>
-        <p style={{ color: 'var(--text-muted)', marginBottom: '2rem', fontSize: '0.9rem' }}>
+        <h2 style={{ marginBottom: '0.5rem', fontSize: '1.5rem' }}>Admin access</h2>
+        <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem', fontSize: '0.9rem' }}>
           Enter your admin key to access the dashboard.
         </p>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <input
+            ref={keyRef}
             type="password"
             value={adminKey}
             onChange={e => setAdminKey(e.target.value)}
-            className="neu-input"
-            style={{ flex: 1, padding: '0.875rem', fontSize: '0.9rem' }}
+            className="input"
+            style={{ flex: 1 }}
             placeholder="Admin key"
             onKeyDown={e => e.key === 'Enter' && authenticate()}
           />
-          <button
-            className="neu-btn neu-btn-primary"
-            onClick={authenticate}
-            style={{ padding: '0.875rem 1.5rem', fontSize: '0.85rem' }}
-          >
+          <button className="btn btn-primary" onClick={authenticate} style={{ padding: '0.75rem 1.5rem' }}>
             Enter
           </button>
         </div>
         {message && (
           <div role="alert" style={{
             marginTop: '1rem', padding: '0.75rem 1rem', fontSize: '0.85rem',
-            background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)',
+            background: 'var(--danger-light)', border: '1px solid rgba(233,78,51,0.2)',
             color: 'var(--danger)',
           }}>
             {message.text}
@@ -114,9 +129,9 @@ export default function AdminPage() {
 
   return (
     <div>
-      <h2 style={{ marginBottom: '0.5rem', fontSize: '1.5rem' }}>Admin Dashboard</h2>
-      <p style={{ color: 'var(--text-muted)', marginBottom: '2rem', fontSize: '0.9rem' }}>
-        Review business submissions and monitor platform activity.
+      <h2 style={{ marginBottom: '0.5rem', fontSize: '1.5rem' }}>Admin dashboard</h2>
+      <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem', fontSize: '0.9rem' }}>
+        Review business submissions, monitor videos, and track platform activity.
       </p>
 
       {/* Stats cards */}
@@ -128,11 +143,11 @@ export default function AdminPage() {
             { label: 'Pending', value: stats.pending_review, color: 'var(--warning)' },
             { label: 'Engagements', value: stats.total_engagements, color: 'var(--text-muted)' },
           ].map(stat => (
-            <div key={stat.label} className="neu-card" style={{ padding: '1rem', textAlign: 'center' }}>
-              <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+            <div key={stat.label} className="card" style={{ padding: '1rem', textAlign: 'center' }}>
+              <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: '0.25rem' }}>
                 {stat.label}
               </div>
-              <div style={{ fontFamily: "'Playfair Display', serif", fontSize: '1.5rem', fontWeight: 900, color: stat.color, marginTop: '0.25rem' }}>
+              <div style={{ fontFamily: "'Anton', sans-serif", fontSize: '1.5rem', fontWeight: 900, color: stat.color }}>
                 {stat.value.toLocaleString()}
               </div>
             </div>
@@ -141,16 +156,16 @@ export default function AdminPage() {
       )}
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: '0.25rem', marginBottom: '1.5rem' }}>
+      <div style={{ display: 'flex', gap: '0.25rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>
         {[
-          { id: 'pending', label: `Pending Review (${pending.length})` },
-          { id: 'all', label: 'All Users' },
+          { id: 'pending', label: `Pending (${pending.length})` },
+          { id: 'videos', label: `Recent videos (${recentVideos.length})` },
+          { id: 'all', label: 'All users' },
         ].map(tab => (
           <button
             key={tab.id}
             className={`nav-item ${activeTab === tab.id ? 'active' : ''}`}
             onClick={() => setActiveTab(tab.id)}
-            style={{ background: 'none', border: 'none' }}
           >
             {tab.label}
           </button>
@@ -160,8 +175,8 @@ export default function AdminPage() {
       {message && (
         <div role="status" style={{
           marginBottom: '1rem', padding: '0.75rem 1rem', fontSize: '0.85rem',
-          background: message.type === 'success' ? 'rgba(74,222,128,0.1)' : 'rgba(239,68,68,0.1)',
-          border: `1px solid ${message.type === 'success' ? 'rgba(74,222,128,0.2)' : 'rgba(239,68,68,0.2)'}`,
+          background: message.type === 'success' ? 'var(--success-light)' : 'var(--danger-light)',
+          border: `1px solid ${message.type === 'success' ? 'rgba(0,143,76,0.2)' : 'rgba(233,78,51,0.2)'}`,
           color: message.type === 'success' ? 'var(--success)' : 'var(--danger)',
         }}>
           {message.text}
@@ -172,16 +187,16 @@ export default function AdminPage() {
       {activeTab === 'pending' && (
         <div style={{ display: 'grid', gap: '1rem' }}>
           {pending.length === 0 ? (
-            <div className="neu-card-inset" style={{ padding: '3rem', textAlign: 'center' }}>
+            <div className="card-inset" style={{ padding: '3rem', textAlign: 'center' }}>
               <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>✓</div>
-              <p style={{ color: 'var(--text-muted)' }}>No pending reviews</p>
+              <p style={{ color: 'var(--text-secondary)' }}>No pending reviews</p>
             </div>
           ) : (
             pending.map(u => (
-              <div key={u.id} className="neu-card" style={{ padding: '1.5rem' }}>
+              <div key={u.id} className="card" style={{ padding: '1.5rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
                   <div>
-                    <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>{u.business_name}</div>
+                    <div style={{ fontWeight: 700, fontSize: '1.1rem', color: 'var(--text-heading)' }}>{u.business_name}</div>
                     <div style={{ fontSize: '0.85rem', color: 'var(--accent)', marginTop: '0.25rem' }}>
                       <a href={u.business_website} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)' }}>
                         {u.business_website}
@@ -191,17 +206,12 @@ export default function AdminPage() {
                       @{u.username} · Submitted {new Date(u.created_at).toLocaleDateString()}
                     </div>
                   </div>
-                  <div style={{
-                    padding: '0.2rem 0.5rem', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase',
-                    borderRadius: '2px',
-                    background: u.approval_status === 'pending' ? 'rgba(251,191,36,0.15)' : 'rgba(239,68,68,0.15)',
-                    color: u.approval_status === 'pending' ? 'var(--warning)' : 'var(--danger)',
-                  }}>
+                  <span className={`badge ${u.approval_status === 'pending' ? 'badge-warning' : 'badge-danger'}`}>
                     {u.approval_status}
-                  </div>
+                  </span>
                 </div>
                 {u.business_description && (
-                  <div className="neu-card-inset" style={{ padding: '0.75rem', fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
+                  <div className="card-inset" style={{ padding: '0.75rem', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
                     {u.business_description}
                   </div>
                 )}
@@ -212,21 +222,21 @@ export default function AdminPage() {
                 )}
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                   <button
-                    className="neu-btn neu-btn-success"
+                    className="btn btn-success"
                     onClick={() => handleReview(u.id, 'approve')}
                     disabled={loading}
-                    style={{ padding: '0.6rem 1.5rem', fontSize: '0.8rem' }}
+                    style={{ padding: '0.5rem 1.25rem', fontSize: '0.8rem' }}
                   >
                     ✓ Approve
                   </button>
                   <button
-                    className="neu-btn neu-btn-danger"
+                    className="btn btn-danger"
                     onClick={() => {
                       const reason = prompt('Rejection reason:');
                       if (reason !== null) handleReview(u.id, 'reject', reason);
                     }}
                     disabled={loading}
-                    style={{ padding: '0.6rem 1.5rem', fontSize: '0.8rem' }}
+                    style={{ padding: '0.5rem 1.25rem', fontSize: '0.8rem' }}
                   >
                     ✗ Reject
                   </button>
@@ -237,9 +247,51 @@ export default function AdminPage() {
         </div>
       )}
 
+      {/* Recent videos */}
+      {activeTab === 'videos' && (
+        <div style={{ display: 'grid', gap: '0.75rem' }}>
+          {recentVideos.length === 0 ? (
+            <div className="card-inset" style={{ padding: '3rem', textAlign: 'center' }}>
+              <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📭</div>
+              <p style={{ color: 'var(--text-secondary)' }}>No videos submitted yet</p>
+            </div>
+          ) : (
+            recentVideos.map(v => {
+              const platform = v.url.includes('tiktok.com') ? 'TikTok' : v.url.includes('instagram.com') ? 'Reels' : 'Shorts';
+              const icon = platform === 'TikTok' ? '♪' : platform === 'Reels' ? '◎' : '▶';
+              return (
+                <div key={v.id} className="card" style={{ padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <div style={{
+                    width: '36px', height: '36px', borderRadius: '6px',
+                    background: platform === 'TikTok' ? '#000' : platform === 'Reels' ? 'var(--danger)' : 'var(--danger)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: 'white', fontSize: '1rem', flexShrink: 0,
+                  }}>{icon}</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-heading)' }}>
+                      {v.business_name || v.username}
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
+                      @{v.username} · {platform} · {new Date(v.created_at).toLocaleString()}
+                    </div>
+                    <a href={v.url} target="_blank" rel="noopener noreferrer"
+                      style={{ fontSize: '0.7rem', color: 'var(--accent)', wordBreak: 'break-all', display: 'block', marginTop: '0.25rem' }}>
+                      {v.url}
+                    </a>
+                  </div>
+                  <span className="badge badge-neutral" style={{ flexShrink: 0 }}>
+                    {v.watch_count || 0} watches
+                  </span>
+                </div>
+              );
+            })
+          )}
+        </div>
+      )}
+
       {/* All users */}
       {activeTab === 'all' && (
-        <div className="neu-card" style={{ padding: '1rem', overflow: 'hidden' }}>
+        <div className="card" style={{ padding: '1rem', overflow: 'hidden' }}>
           <table className="leaderboard-table" aria-label="All users">
             <thead>
               <tr>
@@ -255,16 +307,11 @@ export default function AdminPage() {
                   <td style={{ fontWeight: 600 }}>@{u.username}</td>
                   <td style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{u.business_name || '—'}</td>
                   <td>
-                    <span style={{
-                      padding: '0.15rem 0.4rem', fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase',
-                      borderRadius: '2px',
-                      background: u.approval_status === 'approved' ? 'rgba(74,222,128,0.15)' : u.approval_status === 'pending' ? 'rgba(251,191,36,0.15)' : 'rgba(239,68,68,0.15)',
-                      color: u.approval_status === 'approved' ? 'var(--success)' : u.approval_status === 'pending' ? 'var(--warning)' : 'var(--danger)',
-                    }}>
+                    <span className={`badge ${u.approval_status === 'approved' ? 'badge-success' : u.approval_status === 'pending' ? 'badge-warning' : 'badge-danger'}`}>
                       {u.approval_status}
                     </span>
                   </td>
-                  <td style={{ textAlign: 'right', fontWeight: 800, fontFamily: "'Playfair Display', serif" }}>
+                  <td style={{ textAlign: 'right', fontWeight: 800, fontFamily: "'Anton', sans-serif" }}>
                     {u.total_points.toLocaleString()}
                   </td>
                 </tr>
@@ -275,7 +322,7 @@ export default function AdminPage() {
       )}
 
       <div style={{ marginTop: '2rem' }}>
-        <button className="neu-btn" onClick={() => { fetchStats(); fetchPending(); fetchAllUsers(); }} style={{ padding: '0.5rem 1rem', fontSize: '0.8rem' }}>
+        <button className="btn btn-secondary" onClick={refreshAll} style={{ padding: '0.5rem 1rem', fontSize: '0.8rem' }}>
           ↻ Refresh
         </button>
       </div>

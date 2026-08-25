@@ -358,24 +358,19 @@ app.post('/api/videos/submit', authenticate, submitLimiter, async (req, res) => 
     return res.status(400).json({ error: 'Only HTTP/HTTPS URLs are allowed' });
   }
 
-  // Only allow vertical video platforms (Reels, Shorts, TikTok)
-  const allowedHosts = ['tiktok.com', 'instagram.com', 'youtube.com', 'youtu.be'];
-  const isAllowed = allowedHosts.some(h => parsedUrl.hostname.includes(h));
-  if (!isAllowed) {
-    return res.status(400).json({ error: 'Only TikTok, Instagram Reels, or YouTube Shorts links are allowed' });
-  }
+  // Strict URL validation: only TikTok, Instagram Reels, YouTube Shorts
+  const hostname = parsedUrl.hostname.replace(/^www\./, '');
+  const pathname = parsedUrl.pathname.toLowerCase();
 
-  // Validate it's a vertical/short-form video URL pattern
-  const isReel = parsedUrl.hostname.includes('instagram.com') && (parsedUrl.pathname.includes('/reel/') || parsedUrl.pathname.includes('/p/'));
-  const isShort = parsedUrl.hostname.includes('youtube.com') && (parsedUrl.pathname.includes('/shorts/') || parsedUrl.searchParams.has('v'));
-  const isYTShort = parsedUrl.hostname.includes('youtu.be');
-  const isTikTok = parsedUrl.hostname.includes('tiktok.com');
-  const isInstagram = parsedUrl.hostname.includes('instagram.com');
-  const isYouTube = parsedUrl.hostname.includes('youtube.com');
+  const isTikTok = hostname === 'tiktok.com' || hostname.endsWith('.tiktok.com');
+  const isInstagramReel = hostname === 'instagram.com' && pathname.includes('/reel/');
+  const isYouTubeShort = (hostname === 'youtube.com' || hostname === 'youtu.be') &&
+    (pathname.includes('/shorts/') || pathname === '/shorts');
 
-  // Accept all valid URLs from allowed platforms (Reels, Shorts, TikTok)
-  if (!isTikTok && !isInstagram && !isYouTube) {
-    return res.status(400).json({ error: 'Only TikTok, Instagram Reels, or YouTube Shorts links are allowed' });
+  if (!isTikTok && !isInstagramReel && !isYouTubeShort) {
+    return res.status(400).json({
+      error: 'Only TikTok videos, Instagram Reels, and YouTube Shorts are allowed. Regular YouTube videos, Instagram posts, and other links are not permitted.',
+    });
   }
 
   if (url.length > 500) {
@@ -401,6 +396,10 @@ app.post('/api/videos/submit', authenticate, submitLimiter, async (req, res) => 
       'UPDATE users SET last_post_date = $1 WHERE id = $2',
       [today, user_id]
     );
+
+    // Log admin notification (visible in admin dashboard)
+    const platform = isTikTok ? 'TikTok' : isInstagramReel ? 'Instagram Reels' : 'YouTube Shorts';
+    console.log(`[VIDEO SUBMITTED] ${platform} by user ${user_id} (${url.trim()})`);
 
     res.json({ video: result.rows[0] });
   } catch (err) {
@@ -697,6 +696,26 @@ app.get('/api/admin/stats', adminOnly, async (req, res) => {
     });
   } catch (err) {
     console.error('Admin stats error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// ========== ADMIN: Recent videos ==========
+app.get('/api/admin/videos', adminOnly, async (req, res) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit, 10) || 50, 100);
+    const result = await pool.query(
+      `SELECT v.id, v.url, v.watch_count, v.created_at,
+       u.username, u.business_name, u.approval_status
+       FROM videos v
+       JOIN users u ON v.submitted_by = u.id
+       ORDER BY v.created_at DESC
+       LIMIT $1`,
+      [limit]
+    );
+    res.json({ videos: result.rows });
+  } catch (err) {
+    console.error('Admin videos error:', err);
     res.status(500).json({ error: 'Server error' });
   }
 });
