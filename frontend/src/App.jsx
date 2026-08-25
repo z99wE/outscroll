@@ -664,7 +664,7 @@ function SubmitPage({ user }) {
     <div style={{ maxWidth: '500px', margin: '3rem auto' }}>
       <h2 style={{ marginBottom: '0.25rem', fontSize: '1.75rem' }}>Post a Video</h2>
       <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem', fontSize: '0.9rem' }}>
-        Share one link per day. Earn points when others watch it.
+        Share up to 10 links per day. Earn points when others watch them.
       </p>
 
       {hasPostedToday && (

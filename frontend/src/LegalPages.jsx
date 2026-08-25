@@ -34,8 +34,8 @@ export function FAQPage() {
       a: 'After signing up, go to your Business Profile and submit your business website URL and description. An admin reviews submissions. You\'ll receive a notification once approved or rejected with a reason. You can only post videos after approval.',
     },
     {
-      q: 'Can I post multiple times per day?',
-      a: 'No. One video per day per account. The system enforces this — if you\'ve already posted today, submission is rejected.',
+      q: 'How many videos can I post per day?',
+      a: 'Up to 10 videos per day. The system tracks your daily count — once you hit 10, you\'ll need to wait until tomorrow.',
     },
     {
       q: 'What content is NOT allowed?',
@@ -63,7 +63,15 @@ export function FAQPage() {
     },
     {
       q: 'How long is my data kept?',
-      a: 'Your account data is kept while your account is active. Posted video links and engagement data are automatically purged after 90 days. Notifications are purged after 30 days. If you delete your account, all personal data is removed within 30 days.',
+      a: 'Your account data is kept while your account is active. Posted video links and engagement data are automatically purged after 90 days. Notifications are purged after 30 days. Your business URL is auto-deleted every 7 days for privacy — you\'ll need to re-submit it to keep posting. If you delete your account, all personal data is removed within 30 days.',
+    },
+    {
+      q: 'How does the leaderboard work?',
+      a: 'Points decay by 50% every week. This keeps the leaderboard fresh — recent engagement matters more than old activity. Your rank reflects your current engagement, not historical totals.',
+    },
+    {
+      q: 'Do I need to re-verify my business?',
+      a: 'Yes. Your business URL is automatically deleted every 7 days for privacy. You\'ll need to re-submit your business profile to continue posting videos. This keeps the platform clean and ensures all listed businesses are still active.',
     },
   ];
 

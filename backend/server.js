@@ -96,6 +96,30 @@ const globalLimiter = rateLimit({
 
 app.use('/api', globalLimiter);
 
+// ========== POINT DECAY ==========
+// Apply 50% weekly decay to user points if 7+ days since last decay
+async function applyPointDecay(userId) {
+  try {
+    const result = await pool.query(
+      'SELECT total_points, points_decay_last_applied FROM users WHERE id = $1',
+      [userId]
+    );
+    if (result.rows.length === 0) return;
+    const user = result.rows[0];
+    const lastApplied = user.points_decay_last_applied || user.created_at;
+    const daysSinceLastDecay = (Date.now() - new Date(lastApplied).getTime()) / (1000 * 60 * 60 * 24);
+    if (daysSinceLastDecay >= 7 && user.total_points > 0) {
+      const decayedPoints = Math.floor(user.total_points * 0.5);
+      await pool.query(
+        'UPDATE users SET total_points = $1, points_decay_last_applied = NOW() WHERE id = $2',
+        [decayedPoints, userId]
+      );
+    }
+  } catch (err) {
+    console.error('Point decay error (non-fatal):', err.message);
+  }
+}
+
 // ========== HELPERS ==========
 function sanitizeUsername(username) {
   return username.replace(/[^a-zA-Z0-9_-]/g, '').trim();
@@ -610,10 +634,13 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
     }
 
     clearLoginAttempts(identifier);
-    const { accessToken, refreshToken } = generateTokenPair(user);
+    // Apply weekly point decay before returning user data
+    await applyPointDecay(user.id);
+    // Re-fetch user with updated points
+    const updatedUser = await pool.query('SELECT id, username, total_points, approval_status, business_name, business_website FROM users WHERE id = $1', [user.id]);
+    const { accessToken, refreshToken } = generateTokenPair(updatedUser.rows[0]);
     setRefreshCookie(res, refreshToken);
-    delete user.password_hash;
-    res.json({ user, token: accessToken });
+    res.json({ user: updatedUser.rows[0], token: accessToken });
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).json({ error: 'Server error' });
@@ -739,11 +766,19 @@ app.post('/api/videos/submit', authenticate, submitLimiter, checkAntiBot, async 
   const { url } = req.body;
   const user_id = req.user.id;
 
-  // Check approval status
-  const userCheck = await pool.query('SELECT approval_status FROM users WHERE id = $1', [user_id]);
+  // Check approval status and business URL validity
+  const userCheck = await pool.query('SELECT approval_status, business_url_verified_at FROM users WHERE id = $1', [user_id]);
   if (userCheck.rows.length === 0) return res.status(404).json({ error: 'User not found' });
   if (userCheck.rows[0].approval_status !== 'approved') {
     return res.status(403).json({ error: 'Your business profile is pending approval. You can post videos once approved.' });
+  }
+  // Check if business URL has expired (7-day re-verification)
+  const verifiedAt = userCheck.rows[0].business_url_verified_at;
+  if (verifiedAt) {
+    const daysSinceVerification = (Date.now() - new Date(verifiedAt).getTime()) / (1000 * 60 * 60 * 24);
+    if (daysSinceVerification > 7) {
+      return res.status(403).json({ error: 'Your business verification has expired. Please re-submit your business profile.' });
+    }
   }
 
   if (!url || typeof url !== 'string') {
@@ -782,12 +817,13 @@ app.post('/api/videos/submit', authenticate, submitLimiter, checkAntiBot, async 
 
   try {
     const today = getCurrentDate();
+    const MAX_VIDEOS_PER_DAY = 10;
     const check = await pool.query(
       'SELECT id FROM videos WHERE submitted_by = $1 AND DATE(created_at) = $2',
       [user_id, today]
     );
-    if (check.rows.length > 0) {
-      return res.status(400).json({ error: 'Already posted today. Come back tomorrow!' });
+    if (check.rows.length >= MAX_VIDEOS_PER_DAY) {
+      return res.status(400).json({ error: `You can post up to ${MAX_VIDEOS_PER_DAY} videos per day. Try again tomorrow.` });
     }
 
     const result = await pool.query(
@@ -1000,7 +1036,8 @@ app.put('/api/business/submit', authenticate, async (req, res) => {
 
   try {
     await pool.query(
-      `UPDATE users SET business_name = $1, business_website = $2, business_description = $3, approval_status = 'pending'
+      `UPDATE users SET business_name = $1, business_website = $2, business_description = $3, approval_status = 'pending',
+       business_url_verified_at = NOW()
        WHERE id = $4`,
       [business_name, business_website.trim(), business_description || null, req.user.id]
     );
@@ -1446,10 +1483,24 @@ app.get('/api/admin/db-size', adminOnly, async (req, res) => {
 // Run purge on server start to keep DB clean
 (async () => {
   try {
+    // 1. Delete old reports
     await pool.query(`DELETE FROM reports WHERE video_id IN (SELECT id FROM videos WHERE created_at < NOW() - INTERVAL '90 days')`);
+    // 2. Delete old notifications
     const notifResult = await pool.query(`DELETE FROM notifications WHERE created_at < NOW() - INTERVAL '30 days'`);
+    // 3. Delete old engagements
     const engResult = await pool.query(`DELETE FROM engagements WHERE video_id IN (SELECT id FROM videos WHERE created_at < NOW() - INTERVAL '90 days')`);
+    // 4. Delete old videos
     const videoResult = await pool.query(`DELETE FROM videos WHERE created_at < NOW() - INTERVAL '90 days'`);
+    // 5. Auto-delete business URLs older than 7 days (re-verification required)
+    const bizResult = await pool.query(
+      `UPDATE users SET business_name = NULL, business_website = NULL, business_description = NULL,
+       approval_status = 'pending'
+       WHERE business_url_verified_at < NOW() - INTERVAL '7 days'
+       AND business_website IS NOT NULL`
+    );
+    if (bizResult.rowCount > 0) {
+      console.log(`[AUTO-DELETE] Reset ${bizResult.rowCount} business URLs (7-day expiry)`);
+    }
     if (notifResult.rowCount + engResult.rowCount + videoResult.rowCount > 0) {
       console.log(`[AUTO-PURGE] Notifications: ${notifResult.rowCount}, Engagements: ${engResult.rowCount}, Videos: ${videoResult.rowCount}`);
     }

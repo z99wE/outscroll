@@ -16,6 +16,8 @@ CREATE TABLE users (
   email_verified BOOLEAN DEFAULT FALSE,
   verification_code VARCHAR(6),
   verification_expires TIMESTAMP,
+  points_decay_last_applied TIMESTAMP DEFAULT NOW(),
+  business_url_verified_at TIMESTAMP DEFAULT NOW(),
   created_at TIMESTAMP DEFAULT NOW()
 );
 

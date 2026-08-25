@@ -363,7 +363,7 @@ export default function LandingPage({ onEnter }) {
                   { title: 'Engagement-based ranking', note: 'Your rank is determined by how much you watch others. Not followers. Not money.' },
                   { title: '+100 points per full watch', note: '+5 play, +70 halfway, +100 full, -5 skip. Fair points. No gaming.' },
                   { title: '$0 forever', note: 'No premium tier. No pay-to-rank. No hidden fees. Ever.' },
-                  { title: '1 video per day', note: 'Keeps the feed fresh. Prevents spam. Equal opportunity for all.' },
+                  { title: '10 videos per day', note: 'Post up to 10 video ads daily. Plenty of room to promote your business.' },
                 ].map((item, i) => (
                   <ScrollReveal key={item.title} delay={i * 0.08}>
                     <div style={{
@@ -466,7 +466,7 @@ export default function LandingPage({ onEnter }) {
           <div style={{ maxWidth: '800px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '2rem', textAlign: 'center' }}>
             {[
               { value: 0, suffix: '', label: 'Cost to Users', sub: 'Free forever' },
-              { value: 1, suffix: '/day', label: 'Post Limit', sub: '1 video ad daily' },
+              { value: 10, suffix: '/day', label: 'Post Limit', sub: '10 video ads daily' },
               { value: 100, suffix: '+', label: 'Max Leaderboard', sub: 'Top performers' },
             ].map((stat, i) => (
               <ScrollReveal key={stat.label} delay={i * 0.1}>
