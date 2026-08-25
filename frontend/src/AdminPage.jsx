@@ -326,6 +326,72 @@ export default function AdminPage() {
           ↻ Refresh
         </button>
       </div>
+
+      {/* Donation config */}
+      <DonationConfig headers={headers} />
+    </div>
+  );
+}
+
+// ========== Donation Config (admin only) ==========
+function DonationConfig({ headers }) {
+  const [config, setConfig] = useState({ kofi_url: '', bmc_url: '', donation_enabled: 'false' });
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState(null);
+
+  useEffect(() => {
+    axios.get(`${API}/admin/donation-config`, { headers })
+      .then(res => setConfig(prev => ({ ...prev, ...res.data })))
+      .catch(() => {});
+  }, [headers]);
+
+  const save = async () => {
+    setSaving(true); setMsg(null);
+    try {
+      await axios.put(`${API}/admin/donation-config`, config, { headers });
+      setMsg({ type: 'success', text: 'Donation config saved' });
+    } catch { setMsg({ type: 'error', text: 'Failed to save' }); }
+    finally { setSaving(false); }
+  };
+
+  return (
+    <div className="card" style={{ padding: '1.5rem', marginTop: '2rem' }}>
+      <h3 style={{ fontSize: '1rem', marginBottom: '1rem', color: 'var(--text-heading)' }}>Donation buttons</h3>
+      <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
+        Configure Ko-fi and Buy Me a Coffee links. These appear in the footer for all users.
+      </p>
+      <div style={{ display: 'grid', gap: '0.75rem' }}>
+        <div>
+          <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '0.3rem', fontWeight: 700 }}>Ko-fi URL</label>
+          <input type="url" className="input" value={config.kofi_url || ''}
+            onChange={e => setConfig(c => ({ ...c, kofi_url: e.target.value }))}
+            placeholder="https://ko-fi.com/yourname" />
+        </div>
+        <div>
+          <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '0.3rem', fontWeight: 700 }}>Buy Me a Coffee URL</label>
+          <input type="url" className="input" value={config.bmc_url || ''}
+            onChange={e => setConfig(c => ({ ...c, bmc_url: e.target.value }))}
+            placeholder="https://buymeacoffee.com/yourname" />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <input type="checkbox" id="donation-enabled"
+            checked={config.donation_enabled === 'true'}
+            onChange={e => setConfig(c => ({ ...c, donation_enabled: e.target.checked ? 'true' : 'false' }))}
+          />
+          <label htmlFor="donation-enabled" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Show donation buttons in footer</label>
+        </div>
+      </div>
+      {msg && (
+        <div role="status" style={{
+          marginTop: '0.75rem', padding: '0.5rem 0.75rem', fontSize: '0.8rem',
+          background: msg.type === 'success' ? 'var(--success-light)' : 'var(--danger-light)',
+          color: msg.type === 'success' ? 'var(--success)' : 'var(--danger)',
+        }}>{msg.text}</div>
+      )}
+      <button className="btn btn-primary" onClick={save} disabled={saving}
+        style={{ marginTop: '1rem', padding: '0.5rem 1.25rem', fontSize: '0.8rem' }}>
+        {saving ? 'Saving...' : 'Save config'}
+      </button>
     </div>
   );
 }

@@ -301,6 +301,27 @@ function VideoCard({ video, onTrack, user }) {
           disabled={tracked['skip']} aria-pressed={tracked['skip']}
         >Skip (-5)</button>
       </div>
+
+      {/* Report button */}
+      {user && user.id !== video.submitted_by && (
+        <div style={{ marginTop: '0.5rem', textAlign: 'right' }}>
+          <button
+            onClick={async () => {
+              const reason = prompt('Why are you reporting this video?');
+              if (reason) {
+                try {
+                  await axios.post(`${API}/videos/report`, { video_id: video.id, reason }, {
+                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+                  });
+                  alert('Report submitted. We review all reports within 24 hours.');
+                } catch { alert('Failed to submit report.'); }
+              }
+            }}
+            style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.7rem', padding: '0.25rem 0.5rem' }}
+            aria-label={`Report video by ${video.username}`}
+          >🚩 Report</button>
+        </div>
+      )}
     </article>
   );
 }
@@ -562,6 +583,14 @@ function AuthPage({ onLogin }) {
           <label htmlFor="auth-password" style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: '0.4rem', fontWeight: 700 }}>Password</label>
           <input id="auth-password" name="password" type="password" required minLength={8} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} className="input" placeholder="min 8 chars, upper + lower + number" />
         </div>
+
+        {/* Cloudflare Turnstile CAPTCHA — only shows if site key is configured */}
+        {mode === 'signup' && import.meta.env.VITE_TURNSTILE_SITE_KEY && (
+          <div style={{ marginBottom: '1.5rem' }}>
+            <div className="cf-turnstile" data-sitekey={import.meta.env.VITE_TURNSTILE_SITE_KEY} data-theme="light" />
+            <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer />
+          </div>
+        )}
 
         {error && (
           <div ref={errorRef} role="alert" tabIndex={-1} className="badge badge-danger"
@@ -836,6 +865,46 @@ function NotificationsPage({ onMarkRead }) {
 }
 
 // ========== Main App ==========
+// ========== Donation Buttons (admin-configured) ==========
+function DonationButtons() {
+  const [config, setConfig] = useState(null);
+  useEffect(() => {
+    fetch(`${API}/donations`).then(r => r.json()).then(setConfig).catch(() => {});
+  }, []);
+
+  if (!config || !config.enabled || (!config.kofi && !config.bmc)) return null;
+
+  return (
+    <div style={{ marginTop: '1.5rem', display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+      <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', alignSelf: 'center' }}>Support us:</span>
+      {config.kofi && (
+        <a href={config.kofi} target="_blank" rel="noopener noreferrer"
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
+            padding: '0.4rem 0.875rem', background: '#FF5E5B', color: 'white',
+            borderRadius: '6px', fontSize: '0.7rem', fontWeight: 700,
+            textDecoration: 'none', transition: 'opacity 0.2s',
+          }}
+          onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
+          onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+        >☕ Ko-fi</a>
+      )}
+      {config.bmc && (
+        <a href={config.bmc} target="_blank" rel="noopener noreferrer"
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
+            padding: '0.4rem 0.875rem', background: '#FFDD00', color: '#000',
+            borderRadius: '6px', fontSize: '0.7rem', fontWeight: 700,
+            textDecoration: 'none', transition: 'opacity 0.2s',
+          }}
+          onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
+          onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+        >☕ Buy Me a Coffee</a>
+      )}
+    </div>
+  );
+}
+
 export default function App() {
   const [page, setPage] = useState('feed');
   const [user, setUser] = useState(null);
@@ -948,6 +1017,9 @@ export default function App() {
               >{link.label}</button>
             ))}
           </div>
+
+          {/* Donation buttons — admin-configured via /api/donations */}
+          <DonationButtons />
           <div style={{ marginTop: '0.75rem', fontSize: '0.65rem' }}>© 2026 OutScroll · DPDP & GDPR Compliant</div>
         </footer>
       </div>

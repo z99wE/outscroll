@@ -160,6 +160,249 @@ function clearLoginAttempts(identifier) {
   loginAttempts.delete(identifier);
 }
 
+// ========== DISPOSABLE EMAIL BLOCKLIST ==========
+const DISPOSABLE_DOMAINS = new Set([
+  'tempmail.com', 'throwaway.email', 'guerrillamail.com', 'mailinator.com',
+  'yopmail.com', '10minutemail.com', 'temp-mail.org', 'fakeinbox.com',
+  'sharklasers.com', 'guerrillamailblock.com', 'grr.la', 'dispostable.com',
+  'maildrop.cc', 'tempail.com', 'tempr.email', 'temp-mail.io',
+  'getnada.com', 'emailondeck.com', '33mail.com', 'mytemp.email',
+  'burnermail.io', 'harakirimail.com', 'tmail.ws', 'tmpmail.net',
+  'mohmal.com', 'jetable.org', 'discard.email', 'discardmail.com',
+  'mailcatch.com', 'trashmail.com', 'trashmail.me', 'trashmail.net',
+  'trashmail.org', 'trashmail.io', 'mailexpire.com', 'mailnull.com',
+  'spam4.me', 'bccto.me', 'chacuo.net', '0815.ru', '0clickemail.com',
+  '0wnd.net', '0wnd.org', '1chuan.com', '1pad.de', '1zhuan.com',
+  '20minutemail.com', '2prong.com', '30minutemail.com', '33mail.com',
+  '3d-painting.com', '4warding.com', '4warding.net', '4warding.org',
+  '5ghgfhfghfgh.tk', '60minutemail.com', '675hosting.com', '675hosting.net',
+  '675hosting.org', '6url.com', '75hosting.com', '75hosting.net',
+  '75hosting.org', '7tags.com', '9ox.net', 'a-bc.net', 'afrobacon.com',
+  'agedmail.com', 'ajaxapp.net', 'alivance.com', 'amilegit.com',
+  'amiri.net', 'anappthat.com', 'ano-mail.net', 'anonbox.net',
+  'anonymbox.com', 'antichef.com', 'antichef.net', 'antireg.ru',
+  'antispam.de', 'antispammail.de', 'armyspy.com', 'artman-conception.com',
+  'azmeil.tk', 'baxomale.ht.cx', 'beefmilk.com', 'bigstring.com',
+  'bladesmail.net', 'bloatbox.com', 'bobmail.info', 'bodhi.lawlita.com',
+  'bofthew.com', 'bootybay.de', 'boun.cr', 'bouncr.com',
+  'breakthru.com', 'brefmail.com', 'brennendesreich.de', 'broadbandninja.com',
+  'bsnow.net', 'bspamfree.org', 'buffemail.com', 'bugmenot.com',
+  'bumpymail.com', 'bundes-ede.de', 'burlee.com', 'burumail.com',
+  'buymoreplays.com', 'buyusedlibrarybooks.org', 'bvsdv.com', 'c2.hu',
+  'cachedot.net', 'casualdx.com', 'cellurl.com', 'centermail.com',
+  'centermail.net', 'chammy.info', 'cheatmail.de', 'chogmail.com',
+  'choicemail1.com', 'clixser.com', 'cmail.net', 'cmail.org',
+  'coldemail.info', 'cool.fr.nf', 'correo.blogos.net', 'cosmorph.com',
+  'courriel.fr.nf', 'courrieltemporaire.com', 'crapmail.org', 'crazymailing.com',
+  'cubiclink.com', 'curryworld.de', 'cust.in', 'cuvox.de',
+  'd3p.dk', 'dacoolest.com', 'dandikmail.com', 'dayrep.com',
+  'dcemail.com', 'deadaddress.com', 'deadspam.com', 'delikkt.de',
+  'despam.it', 'despammed.com', 'devnullmail.com', 'dfgh.net',
+  'digitalsanctuary.com', 'dingbone.com', 'discardmail.com',
+  'discardmail.de', 'disposable.cf', 'disposable.ga', 'disposable.ml',
+  'disposable.tk', 'dismail.de', 'disposableaddress.com',
+  'disposableemailaddresses.emailmiser.com', 'disposableinbox.com',
+  'dispose.it', 'disposeamail.com', 'disposemail.com', 'disposmail.com',
+  'dispostable.com', 'dm.w3internet.co.uk', 'dodgeit.com', 'dodgit.com',
+  'dodgit.org', 'donemail.info', 'dontreg.com', 'dontsendmespam.de',
+  'drdrb.com', 'drdrb.net', 'droplar.com', 'dropmail.me',
+  'duam.net', 'dudmail.com', 'dump-email.info', 'dumpandjunk.com',
+  'dumpmail.de', 'dumpyemail.com', 'e-mail.com', 'e-mail.org',
+  'e4ward.com', 'easytrashmail.com', 'ee1.pl', 'ee2.pl',
+  'eelmail.com', 'einmalmail.de', 'einrot.com', 'einrot.de',
+  'eintagsmail.de', 'email-fake.cf', 'email-fake.com', 'email-fake.ga',
+  'email-fake.gq', 'email-fake.ml', 'email-fake.tk', 'email60.com',
+  'emailage.cf', 'emailage.ga', 'emailage.gq', 'emailage.ml',
+  'emailage.tk', 'emaildienst.de', 'emailgo.de', 'emailias.com',
+  'emailigo.de', 'emailinfive.com', 'emaillime.com', 'emailmiser.com',
+  'emailproxsy.com', 'emailresort.com', 'emails.ga', 'emailsensei.com',
+  'emailspam.cf', 'emailspam.ga', 'emailspam.gq', 'emailspam.ml',
+  'emailspam.tk', 'emailta.tk', 'emailtemp.info', 'emailtemp.com',
+  'emailtemp.net', 'emailtemporaire.com', 'emailtemporaire.fr',
+  'emailthe.net', 'emailtmp.com', 'emailto.de', 'emailwarden.com',
+  'emailx.at.hm', 'emailxfer.com', 'emeil.in', 'emeil.ir',
+  'emz.net', 'enterto.com', 'ephemail.net', 'etranquil.com',
+  'etranquil.net', 'etranquil.org', 'evopo.com', 'explodemail.com',
+  'express.net.ua', 'eyepaste.com', 'fakeinbox.com', 'fakeinformation.com',
+  'fakemail.fr', 'fakemailz.com', 'fammix.com', 'fansworldwide.de',
+  'fantasymail.de', 'fastacura.com', 'fastchevy.com', 'fastchrysler.com',
+  'fastkawasaki.com', 'fastmazda.com', 'fastmitsubishi.com', 'fastnissan.com',
+  'fastsubaru.com', 'fastsuzuki.com', 'fasttoyota.com', 'fastyamaha.com',
+  'fightallspam.com', 'filzmail.com', 'fixmail.tk', 'fizmail.com',
+  'fizy.dk', 'flemail.ru', 'flyspam.com', 'footard.com',
+  'forgetmail.com', 'fr33mail.info', 'frapmail.com', 'freemails.cf',
+  'freemails.ga', 'freemails.ml', 'freundin.ru', 'friendlymail.co.uk',
+  'front14.org', 'fuckingduh.com', 'fudgerub.com', 'fux0ringduh.com',
+  'fyii.de', 'garliclife.com', 'gehensiull.com', 'get-mail.cf',
+  'get-mail.ga', 'get-mail.ml', 'get-mail.tk', 'get1mail.com',
+  'get2mail.fr', 'get2mail.nl', 'get2patient.com', 'get365.info',
+  'get365.com', 'getaemail.com', 'getairmail.cf', 'getairmail.com',
+  'getairmail.ga', 'getairmail.gq', 'getairmail.ml', 'getairmail.tk',
+  'getmails.eu', 'getonemail.com', 'getonemail.net', 'ghosttexter.de',
+  'girlsundertheinfluence.com', 'gishpuppy.com', 'goemailgo.com',
+  'gorillaswithdirtyarmpits.com', 'gotmail.com', 'gotmail.net',
+  'gotmail.org', 'gowikibooks.com', 'gowikicampus.com', 'gowikicars.com',
+  'gowikifilms.com', 'gowikigames.com', 'gowikimusic.com', 'gowikinetwork.com',
+  'gowikitravel.com', 'gowikitv.com', 'grandmamail.com', 'grandmasmail.com',
+  'great-host.in', 'greensloth.com', 'greermail.info', 'guerillamail.biz',
+  'guerillamail.com', 'guerillamail.de', 'guerillamail.info', 'guerillamail.net',
+  'guerillamail.org', 'guerrillamail.biz', 'guerrillamail.com',
+  'guerrillamail.de', 'guerrillamail.info', 'guerrillamail.net',
+  'guerrillamail.org', 'guerrillamailblock.com', 'guerrillamailblock.de',
+  'guerrillamailblock.info', 'guerrillamailblock.net', 'guerrillamailblock.org',
+  'gustr.com', 'h8s.org', 'hacccc.com', 'hailmail.net',
+  'habitue.net', 'happypizza.me', 'harakirimail.com', 'hartbot.de',
+  'hat-gansen.de', 'hatespam.org', 'herp.in', 'hidemail.de',
+  'hidzz.com', 'hmamail.com', 'hopemail.biz', 'hot-mail.cf',
+  'hot-mail.ga', 'hot-mail.gq', 'hot-mail.ml', 'hot-mail.tk',
+  'hotpop.com', 'hulapla.de', 'hushmail.com', 'ichimail.com',
+  'imails.info', 'inbax.tk', 'inbox.si', 'inbox2.info',
+  'inboxclean.com', 'inboxclean.org', 'inboxproxy.com', 'incognitomail.com',
+  'incognitomail.net', 'incognitomail.org', 'ineec.net', 'infocom.zp.ua',
+  'inoutmail.de', 'inoutmail.info', 'inoutmail.net', 'insorg-mail.info',
+  'ipoo.org', 'irish2me.com', 'iwi.net', 'jetable.com',
+  'jetable.fr.nf', 'jetable.net', 'jetable.org', 'jnxjn.com',
+  'jourrapide.com', 'jsrsolutions.com', 'junk1e.com', 'junkmail.ga',
+  'junkmail.gq', 'junkmail.ml', 'junkmail.tk', 'jwms1.com',
+  'jwxs.net', 'kingsq.ga', 'kir.ch.tc', 'klassmaster.com',
+  'klassmaster.net', 'klassmaster.org', 'klzlk.com', 'kurzepost.de',
+  'lawlita.com', 'letthemeatspam.com', 'lhsdv.com', 'lifebyfood.com',
+  'link2mail.net', 'litedrop.com', 'lol.ovpn.to', 'lol.ovpn.to',
+  'lookugly.com', 'lopl.co.cc', 'lovemeleaveme.com', 'lr78.com',
+  'lroid.com', 'lukop.dk', 'm21.cc', 'maboard.com',
+  'mail-temporaire.fr', 'mail.by', 'mail.mezimages.net', 'mail.zp.ua',
+  'mail114.net', 'mail1a.de', 'mail21.cc', 'mail2rss.org',
+  'mail333.com', 'mail4trash.com', 'mailbidon.com', 'mailblocks.com',
+  'mailblog.biz', 'mailbucket.org', 'mailcat.biz', 'mailcatch.com',
+  'maildrop.cc', 'maildrop.cf', 'maildrop.ga', 'maildrop.gq',
+  'maildrop.ml', 'maildu.de', 'maildx.com', 'maileater.com',
+  'mailed.ro', 'maileimer.de', 'mailexpire.com', 'mailfa.tk',
+  'mailforspam.com', 'mailfree.ga', 'mailfree.gq', 'mailfree.ml',
+  'mailfreeonline.com', 'mailfs.com', 'mailguard.me', 'mailhazard.com',
+  'mailhazard.us', 'mailhz.me', 'mailimate.com', 'mailin8r.com',
+  'mailinater.com', 'mailinator.com', 'mailinator.net', 'mailinator.org',
+  'mailinator.us', 'mailinator2.com', 'mailincubator.com', 'mailismagic.com',
+  'mailmate.com', 'mailme.ir', 'mailme.lv', 'mailme24.com',
+  'mailmetrash.com', 'mailmoat.com', 'mailnator.com', 'mailnesia.com',
+  'mailnull.com', 'mailorg.org', 'mailpick.biz', 'mailproxsy.com',
+  'mailquack.com', 'mailrock.biz', 'mailsac.com', 'mailscrap.com',
+  'mailshell.com', 'mailsiphon.com', 'mailslite.com', 'mailtemp.info',
+  'mailtothis.com', 'mailtrash.net', 'mailtv.net', 'mailtv.tv',
+  'mailvelope.com', 'mailzi.ru', 'mailzilla.com', 'mailzilla.org',
+  'makemetheking.com', 'manifestgenerator.com', 'manybrain.com',
+  'mbx.cc', 'mega.zik.dj', 'meinspamschutz.de', 'meltmail.com',
+  'messagebeamer.de', 'mezimages.net', 'mfsa.ru', 'mierdamail.com',
+  'migmail.pl', 'migumail.com', 'mindless.com', 'ministry-of-silly-walks.de',
+  'mintemail.com', 'misterpinball.de', 'mmmmail.com', 'moakt.com',
+  'mobi.web.id', 'mobiail.tk', 'mohmal.com', 'mohmal.im',
+  'mohmal.in', 'mohmal.com', 'moncourrier.fr.nf', 'monemail.fr.nf',
+  'monmail.fr.nf', 'monumentmail.com', 'msa.minsmail.com', 'mt2015.com',
+  'mx0.wwwnew.eu', 'my10minutemail.com', 'myalias.pw', 'mycard.net.ua',
+  'mycleaninbox.net', 'myemailboxy.com', 'mymail-in.net', 'mymailoasis.com',
+  'mymailoasis.net', 'mymailoasis.org', 'mynetstore.de', 'mypacks.net',
+  'mypartyclip.de', 'myphantom.com', 'mysamp.de', 'myspaceinc.com',
+  'myspaceinc.net', 'myspaceinc.org', 'myspacepimpedup.com', 'mytemp.email',
+  'mytempemail.com', 'mytempmail.com', 'mythrowaway.email', 'mytempmail.com',
+  'mytempmail.com', 'nabala.com', 'neomailbox.com', 'nepwk.com',
+  'nervmich.net', 'nervtansen.de', 'netmails.com', 'netmails.net',
+  'neverbox.com', 'nice-4u.com', 'nincsmail.hu', 'nnh.com',
+  'no-spam.ws', 'nobulk.com', 'noclickemail.com', 'nogmailspam.info',
+  'nomail.xl.cx', 'nomail2me.com', 'nomorespamemails.com', 'nonspam.eu',
+  'nonspammer.de', 'noref.in', 'nospam.ze.tc', 'nospam4.us',
+  'nospamfor.us', 'nospammail.net', 'nospamthanks.info', 'nothingtosee.com',
+  'nukeit.com', 'nukeit.org', 'nus.edu.sg', 'nwldx.com',
+  'objectmail.com', 'obobbo.com', 'odnorazovoe.ru', 'oneoffemail.com',
+  'onewaymail.com', 'oopi.org', 'ordinaryamerican.net', 'otherinbox.com',
+  'ourklips.com', 'outlawspam.com', 'ovpn.to', 'owlpic.com',
+  'pancakemail.com', 'pimpedupmyspace.com', 'pjjkp.com', 'plexolan.de',
+  'poczta.onet.pl', 'politikerclub.de', 'poofy.org', 'pookmail.com',
+  'privacy.net', 'privatdemail.net', 'proxymail.eu', 'prtnx.com',
+  'punkass.com', 'putthisinyouremail.com', 'qq.com', 'quickinbox.com',
+  'quickmail.nl', 'rcpt.at', 'reallymymail.com', 'realtyalerts.ca',
+  'recode.me', 'recursor.net', 'regbypass.com', 'regbypass.comsafe-mail.net',
+  'rejectmail.com', 'reliable-mail.com', 'rhyta.com', 'rklips.com',
+  'rmqkr.net', 'royal.net', 'rppkn.com', 'rtrtr.com',
+  's0ny.net', 'safe-mail.net', 'safersignup.de', 'safetymail.info',
+  'safetypost.de', 'sandelf.de', 'saynotospams.com', 'scatmail.com',
+  'schafmail.de', 'schafmail.info', 'schrott-email.de', 'secretemail.de',
+  'secure-mail.biz', 'selfdestructingmail.com', 'sendspamhere.com',
+  'shiftmail.com', 'shitmail.me', 'shitmail.org', 'shitware.nl',
+  'shmeriously.com', 'shortmail.net', 'sibmail.com', 'sinnlos-mail.de',
+  'skeefmail.com', 'slaskpost.se', 'slipry.net', 'slopsbox.com',
+  'slowslow.de', 'slutty.horse', 'smashmail.de', 'smellfear.com',
+  'snakemail.com', 'sneakemail.com', 'sneakymail.de', 'snkmail.com',
+  'sofimail.com', 'sofort-mail.de', 'softpls.asia', 'sogetthis.com',
+  'soodonims.com', 'spam.la', 'spam.su', 'spam4.me',
+  'spamavert.com', 'spambob.com', 'spambob.net', 'spambob.org',
+  'spambog.com', 'spambog.de', 'spambog.ru', 'spambox.info',
+  'spambox.irishspringrealty.com', 'spambox.us', 'spambox.xyz',
+  'spamcannon.com', 'spamcannon.net', 'spamcero.com', 'spamcorptastic.com',
+  'spamcowboy.com', 'spamcowboy.net', 'spamcowboy.org', 'spamdigger.com',
+  'spamdns.com', 'spameater.com', 'spameater.de', 'spamex.com',
+  'spamfighter.cf', 'spamfighter.ga', 'spamfighter.gq', 'spamfighter.ml',
+  'spamfighter.tk', 'spamfree.eu', 'spamfree24.com', 'spamfree24.de',
+  'spamfree24.eu', 'spamfree24.info', 'spamfree24.net', 'spamfree24.org',
+  'spamgoes.in', 'spamgourmet.com', 'spamgourmet.net', 'spamgourmet.org',
+  'spamherelots.com', 'spamhereplease.com', 'spamhole.com', 'spamify.com',
+  'spaminator.de', 'spamkill.info', 'spaml.com', 'spaml.de',
+  'spammotel.com', 'spamobox.com', 'spamoff.de', 'spamslicer.com',
+  'spamspot.com', 'spamstack.net', 'spamthis.co.uk', 'spamthisplease.com',
+  'spamtrail.com', 'spamtrap.ro', 'speed.1s.fr', 'spoofmail.de',
+  'stuffmail.de', 'supergreatmail.com', 'supermailer.jp', 'superram.com',
+  'supremepicks.com', 'surfeu.ru', 'svk.jp', 'sweetxxx.de',
+  'tafmail.com', 'tagyoureit.com', 'talkinator.com', 'tapchicuoihoi.com',
+  'teewars.org', 'teleworm.com', 'teleworm.us', 'temp-mail.org',
+  'temp-mail.ru', 'temp.bobitized.com', 'temp.emeraldwebmail.com',
+  'temp.headedmails.com', 'temp.mail-headquarters.com', 'temp mail.com',
+  'temp mails.com', 'temp2.email', 'tempail.com', 'tempano.com',
+  'tempbaker.com', 'tempemail.biz', 'tempemail.co.za', 'tempemail.com',
+  'tempemail.net', 'tempemail.org', 'tempemail2.com', 'tempinbox.com',
+  'tempmail.eu', 'tempmail.it', 'tempmail2.com', 'tempmailer.com',
+  'tempmailer.de', 'tempomail.fr', 'temporarily.de', 'temporarioemail.com',
+  'temporarioemail.com.br', 'temporaryemail.net', 'temporaryemail.us',
+  'temporaryforwarding.com', 'temporaryinbox.com', 'temporarymailaddress.com',
+  'tempemail.net', 'tempmailer.com', 'tempmailer.de', 'tempomail.fr',
+  'temporarily.de', 'temporarioemail.com', 'temporarioemail.com.br',
+  'temporaryemail.net', 'temporaryemail.us', 'temporaryforwarding.com',
+  'temporaryinbox.com', 'temporarymailaddress.com', 'tempthe.net',
+  'thankdog.com', 'thankyou2010.com', 'thc.st', 'thecloudindex.com',
+  'thetempmail.com', 'throwawayemailaddress.com', 'tittbit.in',
+  'tizi.com', 'tmailinator.com', 'toiea.com', 'toomail.biz',
+  'topranklist.de', 'tradermail.info', 'trash-amil.com', 'trash-mail.at',
+  'trash-mail.com', 'trash-mail.de', 'trash-me.com', 'trash2009.com',
+  'trashdevil.com', 'trashdevil.de', 'trashemail.de', 'trashmail.at',
+  'trashmail.com', 'trashmail.de', 'trashmail.me', 'trashmail.net',
+  'trashmail.org', 'trashmail.ws', 'trashmailer.com', 'trashmailer.net',
+  'trashymail.com', 'trashymail.net', 'trbvm.com', 'trbvn.com',
+  'trbvo.com', 'trbw.com', 'trialmail.de', 'trickmail.net',
+  'trillianpro.com', 'turual.com', 'twinmail.de', 'twoweeks.tk',
+  'tyldd.com', 'uggsrock.com', 'umail.net', 'upliftnow.com',
+  'uplipht.com', 'venompen.com', 'veryrealliemail.com', 'vidtag.com',
+  'viewcastmedia.com', 'viewcastmedia.net', 'viewcastmedia.org',
+  'vomoto.com', 'vpn.st', 'vsimcard.com', 'vubby.com',
+  'wasteland.rfc822.org', 'webemail.me', 'weg-werf-email.de',
+  'wegwerfadresse.de', 'wegwerfemail.com', 'wegwerfemail.de',
+  'wegwerfmail.de', 'wegwerfmail.net', 'wegwerfmail.org',
+  'wegwerfmail24.de', 'wegwerfemailadresse.de', 'wegwerfemails.de',
+  'wegwerfemailsite.de', 'wegwerfmailweb.de', 'wegwerfpost.de',
+  'wegwerfpost.info', 'wegwerfpost.net', 'wegwerfpost.org',
+  'wh4f.org', 'whatiaas.com', 'whatpaas.com', 'whyspam.me',
+  'wickmail.net', 'wilemail.com', 'willhackforfood.biz', 'willselfdestruct.com',
+  'winemaven.info', 'wronghead.com', 'wuzup.net', 'wuzupmail.net',
+  'wwwnew.eu', 'xagloo.com', 'xemaps.com', 'xents.com',
+  'xjoi.com', 'xmaily.com', 'xoxy.net', 'yapped.net',
+  'yeah.net', 'yep.it', 'yogamaven.com', 'yomail.info',
+  'yoplait.net', 'you-spam.com', 'ypmail.webarnak.fr.eu.org',
+  'yuurok.com', 'zehnminutenmail.de', '1zhuan.com', '33mail.com',
+  'emailfake.com', 'emailondeck.com', 'tempail.com', 'throwam.com',
+]);
+
+function isDisposableEmail(email) {
+  if (!email) return false;
+  const domain = email.split('@')[1]?.toLowerCase();
+  return DISPOSABLE_DOMAINS.has(domain);
+}
+
 // ========== ANTI-BOT HELPERS ==========
 const signupTimestamps = new Map(); // Track form submission times
 const MIN_FORM_TIME_MS = 3000; // Minimum 3 seconds to fill signup form
@@ -182,14 +425,39 @@ function checkAntiBot(req, res, next) {
     }
   }
 
-  // 3. Missing or suspicious User-Agent
+  // 3. Cloudflare Turnstile CAPTCHA verification
+  const turnstileToken = req.body['cf-turnstile-response'];
+  const TURNSTILE_SECRET = process.env.TURNSTILE_SECRET_KEY;
+  if (TURNSTILE_SECRET && turnstileToken) {
+    // Verify token with Cloudflare (async, non-blocking if verification fails)
+    fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `secret=${TURNSTILE_SECRET}&response=${turnstileToken}&remoteip=${req.ip}`,
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (!data.success) {
+        console.log(`[BOT BLOCKED] Turnstile verification failed from ${req.ip}`);
+        return res.status(403).json({ error: 'CAPTCHA verification failed' });
+      }
+      next();
+    })
+    .catch(err => {
+      console.error('Turnstile error:', err.message);
+      next(); // Don't block on verification errors
+    });
+    return; // Don't call next() yet — waiting for Turnstile response
+  }
+
+  // 4. Missing or suspicious User-Agent
   const ua = req.headers['user-agent'] || '';
   if (!ua || ua.length < 10 || /bot|crawler|spider|scraper|curl|wget|python/i.test(ua)) {
     console.log(`[BOT BLOCKED] Suspicious User-Agent: ${ua} from ${req.ip}`);
     return res.status(403).json({ error: 'Access denied' });
   }
 
-  // 4. Check for required browser headers (bots often miss these)
+  // 5. Check for required browser headers (bots often miss these)
   if (!req.headers['accept-language'] || !req.headers['accept-encoding']) {
     console.log(`[BOT BLOCKED] Missing browser headers from ${req.ip}`);
     return res.status(403).json({ error: 'Access denied' });
@@ -262,6 +530,11 @@ app.post('/api/auth/signup', authLimiter, checkAntiBot, async (req, res) => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
     return res.status(400).json({ error: 'Invalid email format' });
+  }
+
+  // Block disposable/temporary email domains
+  if (isDisposableEmail(email)) {
+    return res.status(400).json({ error: 'Disposable email addresses are not allowed. Please use a permanent email.' });
   }
 
   const cleanUsername = sanitizeUsername(username);
@@ -792,6 +1065,104 @@ app.get('/api/admin/videos', adminOnly, async (req, res) => {
     res.json({ videos: result.rows });
   } catch (err) {
     console.error('Admin videos error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// ========== ADMIN: Donation config ==========
+app.get('/api/admin/donation-config', adminOnly, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT key, value FROM site_config WHERE key IN ('kofi_url', 'bmc_url', 'donation_enabled')`
+    );
+    const config = {};
+    result.rows.forEach(r => { config[r.key] = r.value; });
+    res.json(config);
+  } catch (err) {
+    // If site_config table doesn't exist, return defaults
+    res.json({ kofi_url: '', bmc_url: '', donation_enabled: 'false' });
+  }
+});
+
+app.put('/api/admin/donation-config', adminOnly, async (req, res) => {
+  const { kofi_url, bmc_url, donation_enabled } = req.body;
+  try {
+    // Ensure table exists
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS site_config (
+        key VARCHAR(50) PRIMARY KEY,
+        value TEXT NOT NULL,
+        updated_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+    if (kofi_url !== undefined) {
+      await pool.query(
+        `INSERT INTO site_config (key, value) VALUES ('kofi_url', $1)
+         ON CONFLICT (key) DO UPDATE SET value = $1, updated_at = NOW()`,
+        [kofi_url]
+      );
+    }
+    if (bmc_url !== undefined) {
+      await pool.query(
+        `INSERT INTO site_config (key, value) VALUES ('bmc_url', $1)
+         ON CONFLICT (key) DO UPDATE SET value = $1, updated_at = NOW()`,
+        [bmc_url]
+      );
+    }
+    if (donation_enabled !== undefined) {
+      await pool.query(
+        `INSERT INTO site_config (key, value) VALUES ('donation_enabled', $1)
+         ON CONFLICT (key) DO UPDATE SET value = $1, updated_at = NOW()`,
+        [String(donation_enabled)]
+      );
+    }
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Donation config error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Public endpoint for donation buttons (read-only, safe to expose)
+app.get('/api/donations', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT key, value FROM site_config WHERE key IN ('kofi_url', 'bmc_url', 'donation_enabled')`
+    );
+    const config = {};
+    result.rows.forEach(r => { config[r.key] = r.value; });
+    res.json({
+      enabled: config.donation_enabled === 'true',
+      kofi: config.kofi_url || '',
+      bmc: config.bmc_url || '',
+    });
+  } catch {
+    res.json({ enabled: false, kofi: '', bmc: '' });
+  }
+});
+
+// ========== REPORT CONTENT ==========
+app.post('/api/videos/report', authenticate, async (req, res) => {
+  const { video_id, reason } = req.body;
+  if (!video_id || !reason) return res.status(400).json({ error: 'video_id and reason required' });
+  try {
+    await pool.query(
+      `CREATE TABLE IF NOT EXISTS reports (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        video_id UUID NOT NULL REFERENCES videos(id),
+        reported_by UUID NOT NULL REFERENCES users(id),
+        reason TEXT NOT NULL,
+        status VARCHAR(20) DEFAULT 'pending',
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+    await pool.query(
+      'INSERT INTO reports (video_id, reported_by, reason) VALUES ($1, $2, $3)',
+      [video_id, req.user.id, reason]
+    );
+    res.json({ success: true, message: 'Report submitted. We review all reports within 24 hours.' });
+  } catch (err) {
+    console.error('Report error:', err);
     res.status(500).json({ error: 'Server error' });
   }
 });
