@@ -69,3 +69,9 @@ CREATE INDEX idx_users_approval ON users(approval_status);
 CREATE INDEX idx_engagements_user ON engagements(user_id);
 CREATE INDEX idx_engagements_video ON engagements(video_id);
 CREATE INDEX idx_notifications_user ON notifications(user_id, read, created_at DESC);
+
+-- ========== DATA RETENTION POLICY ==========
+-- Videos older than 90 days are purged to keep the DB under 500MB.
+-- Engagements older than 90 days are purged similarly.
+-- Notifications older than 30 days are purged.
+-- Run the /api/admin/purge endpoint periodically (via cron or manual trigger).

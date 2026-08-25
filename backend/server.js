@@ -1294,6 +1294,102 @@ app.put('/api/notifications/read', authenticate, async (req, res) => {
   }
 });
 
+// ========== DATA RETENTION / PURGE ==========
+// Purge old data to keep DB under Supabase free tier (500MB).
+// Videos, engagements, and notifications older than retention days are deleted.
+app.post('/api/admin/purge', adminOnly, async (req, res) => {
+  const videoRetentionDays = parseInt(req.body.video_retention_days, 10) || 90;
+  const engagementRetentionDays = parseInt(req.body.engagement_retention_days, 10) || 90;
+  const notificationRetentionDays = parseInt(req.body.notification_retention_days, 10) || 30;
+
+  try {
+    // Delete old notifications first (smallest, most numerous)
+    const notifResult = await pool.query(
+      'DELETE FROM notifications WHERE created_at < NOW() - INTERVAL $1 DAY',
+      [notificationRetentionDays]
+    );
+
+    // Delete engagements for videos older than retention
+    const engResult = await pool.query(
+      `DELETE FROM engagements WHERE video_id IN (
+        SELECT id FROM videos WHERE created_at < NOW() - INTERVAL $1 DAY
+      )`,
+      [engagementRetentionDays]
+    );
+
+    // Delete old videos (cascade will handle remaining references)
+    const videoResult = await pool.query(
+      'DELETE FROM videos WHERE created_at < NOW() - INTERVAL $1 DAY',
+      [videoRetentionDays]
+    );
+
+    // Also purge reports for deleted videos
+    const reportResult = await pool.query(
+      `DELETE FROM reports WHERE video_id NOT IN (SELECT id FROM videos)`
+    );
+
+    // Purge orphaned notifications for deleted videos
+    const orphanNotifResult = await pool.query(
+      `DELETE FROM notifications WHERE video_id IS NOT NULL AND video_id NOT IN (SELECT id FROM videos)`
+    );
+
+    console.log(`[PURGE] Notifications: ${notifResult.rowCount}, Engagements: ${engResult.rowCount}, Videos: ${videoResult.rowCount}, Reports: ${reportResult.rowCount}, Orphan notifs: ${orphanNotifResult.rowCount}`);
+
+    res.json({
+      success: true,
+      purged: {
+        notifications: notifResult.rowCount,
+        engagements: engResult.rowCount,
+        videos: videoResult.rowCount,
+        reports: reportResult.rowCount,
+        orphaned_notifications: orphanNotifResult.rowCount,
+      },
+      retention_days: {
+        videos: videoRetentionDays,
+        engagements: engagementRetentionDays,
+        notifications: notificationRetentionDays,
+      },
+    });
+  } catch (err) {
+    console.error('Purge error:', err);
+    res.status(500).json({ error: 'Purge failed' });
+  }
+});
+
+// ========== DB SIZE CHECK ==========
+app.get('/api/admin/db-size', adminOnly, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        pg_size_pretty(pg_database_size(current_database())) as database_size,
+        (SELECT count(*) FROM users) as users,
+        (SELECT count(*) FROM videos) as videos,
+        (SELECT count(*) FROM engagements) as engagements,
+        (SELECT count(*) FROM notifications) as notifications,
+        (SELECT count(*) FROM reports) as reports
+    `);
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('DB size error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// ========== AUTO-PURGE ON STARTUP ==========
+// Run purge on server start to keep DB clean
+(async () => {
+  try {
+    const notifResult = await pool.query('DELETE FROM notifications WHERE created_at < NOW() - INTERVAL 30 DAY');
+    const engResult = await pool.query(`DELETE FROM engagements WHERE video_id IN (SELECT id FROM videos WHERE created_at < NOW() - INTERVAL 90 DAY)`);
+    const videoResult = await pool.query('DELETE FROM videos WHERE created_at < NOW() - INTERVAL 90 DAY');
+    if (notifResult.rowCount + engResult.rowCount + videoResult.rowCount > 0) {
+      console.log(`[AUTO-PURGE] Notifications: ${notifResult.rowCount}, Engagements: ${engResult.rowCount}, Videos: ${videoResult.rowCount}`);
+    }
+  } catch (err) {
+    console.error('Auto-purge error (non-fatal):', err.message);
+  }
+})();
+
 console.log('ADMIN_KEY:', ADMIN_KEY);
 
 // ========== START SERVER ==========

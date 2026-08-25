@@ -15,15 +15,15 @@ export function FAQPage() {
     },
     {
       q: 'How do I get on the leaderboard?',
-      a: 'Sign up with your email, submit your business website for review. Once our team approves your business (typically within 24-48 hours), you can start posting one video per day and watching others to earn points.',
+      a: 'Sign up with your email and create a password. Submit your business website and description for review. Our admin reviews submissions — you\'ll receive a notification once approved or rejected. You can only post videos after approval.',
     },
     {
       q: 'What kind of videos can I post?',
-      a: 'Only vertical short-form video content: TikTok links, Instagram Reels, and YouTube Shorts. No landscape videos, no podcasts, no regular YouTube links. Content must promote a legitimate business — product demos, company culture, service explainers, testimonials, etc.',
+      a: 'Only vertical short-form video content: TikTok links, Instagram Reels, and YouTube Shorts. The system rejects any URL that doesn\'t match these platforms. No landscape videos, no podcasts, no regular YouTube links. Content must promote a legitimate business.',
     },
     {
       q: 'How does the points system work?',
-      a: '+5 points for playing a video, +70 for watching 50%, +100 for a full watch, and -5 for skipping before 50%. Creator posting does NOT earn you points (this prevents gaming). Your rank is determined purely by how much you watch others.',
+      a: '+5 points for clicking play, +70 for watching 50% of a video, +100 for a full watch, and -5 for skipping before 50%. Your rank is determined purely by how much you watch others — not by followers, not by money.',
     },
     {
       q: 'Is it really free?',
@@ -31,19 +31,19 @@ export function FAQPage() {
     },
     {
       q: 'How does business approval work?',
-      a: 'After signing up, go to your Business Profile and submit your business website URL and description. Our team reviews submissions within 24-48 hours. You\'ll receive a notification once approved (or rejected with reason). You can only post videos after approval.',
+      a: 'After signing up, go to your Business Profile and submit your business website URL and description. An admin reviews submissions. You\'ll receive a notification once approved or rejected with a reason. You can only post videos after approval.',
     },
     {
       q: 'Can I post multiple times per day?',
-      a: 'No. One video per day per account. This keeps the feed fresh and prevents spam.',
+      a: 'No. One video per day per account. The system enforces this — if you\'ve already posted today, submission is rejected.',
     },
     {
       q: 'What content is NOT allowed?',
-      a: 'No pornography, gambling, weapons, drugs, hate speech, scams, violence, spam, non-vertical videos, or content infringing intellectual property. See our full Content Policy for the complete list.',
+      a: 'No pornography, gambling, weapons, drugs, hate speech, scams, violence, spam, non-vertical videos, or content infringing intellectual property. See our Content Policy for the complete list.',
     },
     {
       q: 'Can I delete my account and data?',
-      a: 'Yes. Under DPDP (India) and GDPR (EU) you have the right to erasure. Contact our Grievance Officer to request full account and data deletion. All personal data is removed within 30 days.',
+      a: 'Yes. Under DPDP (India) and GDPR (EU) you have the right to erasure. Go to My Data in the footer to request account deletion. All personal data is removed within 30 days.',
     },
     {
       q: 'How is OutScroll different from buying followers?',
@@ -51,15 +51,19 @@ export function FAQPage() {
     },
     {
       q: 'Is my data safe?',
-      a: 'We comply with DPDP Act 2023 (India) and GDPR (EU). We don\'t sell your data. We never display your email or contact info publicly. Passwords are bcrypt-hashed. All data is encrypted in transit. See our Privacy Policy for full details.',
+      a: 'We comply with DPDP Act 2023 (India) and GDPR (EU). We don\'t sell your data. We never display your email or contact info publicly. Passwords are hashed with bcrypt. Data is encrypted in transit. See our Privacy Policy for full details.',
     },
     {
-      q: 'What happens if someone reports my content?',
-      a: 'All reports are reviewed within 24 hours. If your content violates our Content Policy, you\'ll receive a notification with the reason. You can appeal by contacting our Grievance Officer.',
+      q: 'What happens if someone posts bad content?',
+      a: 'Every video has a Report button. Reports are reviewed by our admin. If content violates our Content Policy, the video is removed and the poster is notified. Repeated violations result in account suspension.',
     },
     {
       q: 'How do I contact support?',
-      a: 'Email our Grievance Officer at grievance@outscroll.com. For DPDP/GDPR data requests, use the same contact. We respond within 72 hours for general queries and within 30 days for data requests as required by law.',
+      a: 'Email our Grievance Officer at grievance@outscroll.com. For DPDP/GDPR data requests, use the same contact.',
+    },
+    {
+      q: 'How long is my data kept?',
+      a: 'Your account data is kept while your account is active. Posted video links and engagement data are automatically purged after 90 days. Notifications are purged after 30 days. If you delete your account, all personal data is removed within 30 days.',
     },
   ];
 
@@ -281,7 +285,7 @@ export function PrivacyPolicyPage() {
             <li>We <strong>never display</strong> your email address or contact information publicly</li>
             <li>We <strong>never run</strong> targeted advertisements based on your data</li>
             <li>We <strong>never share</strong> your personal data with other users beyond your username</li>
-            <li>We <strong>never collect</strong> data from children under 18 (age restriction enforced at signup)</li>
+            <li>We <strong>never knowingly collect</strong> data from children under 18</li>
             <li>We <strong>never use</strong> your data for purposes incompatible with the original collection purpose</li>
           </ul>
         </section>
@@ -295,7 +299,7 @@ export function PrivacyPolicyPage() {
             <li><strong>Service providers:</strong> Hosting providers who process data on our behalf under strict data processing agreements</li>
           </ul>
           <p style={{ marginTop: '0.75rem' }}>
-            We do not transfer personal data outside India or the EU without appropriate safeguards as required by DPDP/GDPR.
+            We use infrastructure providers that maintain compliance with applicable data protection standards.
           </p>
         </section>
 
@@ -321,7 +325,9 @@ export function PrivacyPolicyPage() {
           <ul style={ulStyle}>
             <li><strong>Active accounts:</strong> Data retained while your account is active</li>
             <li><strong>Account deletion:</strong> All personal data permanently removed within <strong>30 days</strong> of deletion request</li>
-            <li><strong>Aggregated data:</strong> Anonymized, non-identifiable usage statistics may be retained indefinitely for platform improvement</li>
+            <li><strong>Video data:</strong> Posted video links and associated engagement data are automatically purged after <strong>90 days</strong> to maintain platform efficiency</li>
+            <li><strong>Notifications:</strong> Older than <strong>30 days</strong> are automatically purged</li>
+            <li><strong>Aggregated data:</strong> Anonymized, non-identifiable usage statistics may be retained for platform improvement</li>
             <li><strong>Legal hold:</strong> Data may be retained longer if required by applicable law or ongoing legal proceedings</li>
           </ul>
         </section>
@@ -335,7 +341,7 @@ export function PrivacyPolicyPage() {
             <li>Rate limiting on all API endpoints to prevent abuse</li>
             <li>Input validation and parameterized queries to prevent injection attacks</li>
             <li>Security headers via Helmet (CSP, X-Frame-Options, HSTS, etc.)</li>
-            <li>Regular security audits and penetration testing</li>
+            <li>Periodic security reviews of code and infrastructure</li>
           </ul>
         </section>
 
