@@ -113,7 +113,7 @@ function Header({ page, setPage, user, onLogout, unreadCount = 0, onHome }) {
           style={{ cursor: 'pointer', background: 'none', border: 'none', fontFamily: 'inherit', fontSize: 'inherit', color: 'inherit' }}
           onClick={onHome}
           aria-label="OutScroll home"
-        >out<span>scroll</span></button>
+        ><img src="/favicon.svg" alt="" style={{ height: '24px', verticalAlign: 'middle' }} /> out<span>scroll</span></button>
 
         {/* Mobile hamburger */}
         <button
@@ -1061,7 +1061,7 @@ export default function App() {
           textAlign: 'center', padding: '3rem 1.5rem', color: 'var(--text-muted)',
           fontSize: '0.75rem', borderTop: '1px solid var(--border)', marginTop: '3rem',
         }}>
-          <span className="logo" style={{ fontSize: '1rem' }}>out<span>scroll</span></span>
+          <img src="/logo.svg" alt="OutScroll" style={{ width: '100px', height: 'auto', opacity: 0.8 }} />
           <div style={{ marginTop: '0.5rem', marginBottom: '1rem' }}>Free leaderboard for entrepreneurs · Post vertical ads · Climb by watching others</div>
           <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
             {[

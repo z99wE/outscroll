@@ -206,9 +206,7 @@ export default function LandingPage({ onEnter }) {
             <div style={{ position: 'absolute', inset: '4px', border: '1px solid #e94e33', transform: 'rotate(1deg)', opacity: 0.15 }} />
             <div style={{ position: 'absolute', inset: '4px', border: '1px solid #e94e33', transform: 'rotate(-1deg)', opacity: 0.15 }} />
             <div style={{ textAlign: 'center' }}>
-              <span style={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.4em', background: '#e94e33', color: '#f5f1eb', padding: '0.2rem 0.5rem', display: 'inline-block', marginBottom: '0.5rem' }}>Free Engagement Leaderboard</span>
-              <h1 style={{ fontFamily: "'Anton', sans-serif", fontSize: '4rem', color: '#e94e33', letterSpacing: '-0.02em', lineHeight: 1, textShadow: '2px 2px 0px rgba(0,0,0,0.06)' }}>OUTSCROLL</h1>
-              <div style={{ fontFamily: "'Anton', sans-serif", fontSize: '1rem', color: '#1a1a1a', letterSpacing: '0.1em', marginTop: '0.25rem' }}>CLIMB THE LADDER</div>
+              <img src="/logo.svg" alt="OutScroll — Climb the Ladder" style={{ width: '320px', maxWidth: '90%', height: 'auto' }} />
             </div>
           </div>
         </div>
@@ -519,8 +517,7 @@ export default function LandingPage({ onEnter }) {
           <div>Free Tier Available</div>
           <div style={{ marginTop: '0.5rem' }}>India · Worldwide</div>
         </div>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontFamily: "'Anton', sans-serif", fontSize: '1.25rem', color: '#f5f1eb' }}>OUTSCROLL</div>
+        <div style={{ textAlign: 'center' }}>                <img src="/logo.svg" alt="OutScroll" style={{ width: '120px', height: 'auto', filter: 'invert(1) brightness(2)' }} />
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>
           <div style={{ display: 'flex', gap: '1.5rem', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em' }}>

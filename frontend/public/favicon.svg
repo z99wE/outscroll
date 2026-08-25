@@ -1,11 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
-  <defs>
-    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#5B8DEF"/>
-      <stop offset="100%" style="stop-color:#A855F7"/>
-    </linearGradient>
-  </defs>
-  <rect width="64" height="64" rx="14" fill="#0A0A0F"/>
-  <text x="32" y="46" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="40" font-weight="900" fill="url(#g)">S</text>
-  <circle cx="50" cy="14" r="5" fill="#5B8DEF" opacity="0.8"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Background -->
+  <rect width="32" height="32" fill="#f5f1eb" rx="4"/>
+
+  <!-- Top color bar -->
+  <rect x="0" y="0" width="8" height="3" fill="#005eb8"/>
+  <rect x="8" y="0" width="8" height="3" fill="#e94e33"/>
+  <rect x="16" y="0" width="8" height="3" fill="#fdb913"/>
+  <rect x="24" y="0" width="8" height="3" fill="#008f4c"/>
+
+  <!-- O -->
+  <text x="5" y="24" font-family="'Anton', 'Impact', sans-serif" font-size="18" font-weight="900" fill="#1a1a1a">O</text>
+
+  <!-- S in red -->
+  <text x="15" y="24" font-family="'Anton', 'Impact', sans-serif" font-size="18" font-weight="900" fill="#e94e33">S</text>
+
+  <!-- Arrow up — climb motif -->
+  <polygon points="26,8 30,14 28,14 28,22 24,22 24,14 22,14" fill="#008f4c" opacity="0.9"/>
 </svg>
